@@ -91,7 +91,7 @@ function createFluxlet(id) {
     }
 
     // Wrapper for calculation and sideEffect functions, that simply logs the call
-    function logCall(fn, name, type) {
+    function logCall(fn, type, name) {
         return (...args) => {
             log("call", type, name, [args[0]]);
             return fn(...args);
