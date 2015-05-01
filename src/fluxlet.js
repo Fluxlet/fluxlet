@@ -1,9 +1,43 @@
+// # Fluxlet
 
+// Fluxlet uses a fluent API to construct an instance, a fluxlet can be named or annonymous.
+
+// Internal map of named fluxlets
+const fluxlets = {};
+
+// Create or retrieve a fluxlet
 export default function(id) {
+
+    // Return an existing fluxlet by id if it exists
+    if (id && fluxlets[id]) {
+        return fluxlets[id];
+    }
+
+    const instance = createFluxlet(id);
+
+    // Anonymous fluxlets are not stored
+    if (id) {
+        fluxlets[id] = instance;
+    }
+
+    return instance;
+}
+
+function createFluxlet(id) {
+
+    // The locker stores the state of the fluxlet between dispatches
     const locker = createLocker();
+
+    // The map of action dispatchers
     const dispatchers = {};
+
+    // The list of state calculation functions
     const calculations = [];
+
+    // The list of side effect functions
     const sideEffects = [];
+
+    // Log category settings
     const logging = {
         register: true,
         dispatch: true,
@@ -20,6 +54,7 @@ export default function(id) {
         }
     }
 
+    // Create a dispatcher function for an action
     function createDispatcher(action, type, name) {
         return (...args) => {
             log("dispatch", type, name, args);
@@ -28,11 +63,14 @@ export default function(id) {
             const startState = locker.claim(name);
 
             try {
-                // Call with the state from the locker
+                // Call the actions with the args given to the dispatcher, and then pass the state
+                // from the locker to the returned function
                 let endState = action(...args)(startState);
 
                 // Chain calculation calls
                 calculations.forEach(calculation => {
+                    // passing the state return from one into the next,
+                    // the starting state prior to the action is also given.
                     endState = calculation(endState, startState);
                 });
 
@@ -41,15 +79,18 @@ export default function(id) {
 
                     // Call side-effects only if state has changed
                     sideEffects.forEach(sideEffect => {
+                        // passing the new state, original state, and all action dispatchers
                         sideEffect(endState, startState, dispatchers);
                     });
                 }
             } finally {
+                // Release the state locker ready for another dispatch
                 locker.release();
             }
         };
     }
 
+    // Wrapper for calculation and sideEffect functions, that simply logs the call
     function logCall(fn, name, type) {
         return (...args) => {
             log("call", type, name, [args[0]]);
@@ -57,6 +98,7 @@ export default function(id) {
         };
     }
 
+    // Create the wrapper for action, calculation and side-effect functions or conditionals
     function createCall(type, name, fnOrCond, wrap) {
         log("register", type, name);
 
@@ -69,6 +111,7 @@ export default function(id) {
         }
     }
 
+    // Create the wrapper for conditional functions
     function conditionalCall(when, then) {
         return (...args) => {
             // A conditional is only run if its 'when' function returns true
@@ -85,6 +128,7 @@ export default function(id) {
     }
 
     return {
+        // Set the initial state of the fluxlet
         state(state) {
             log("create", "state", state);
             locker.claim();
@@ -93,6 +137,11 @@ export default function(id) {
             return this;
         },
 
+        // Add named actions to the fluxlet. An action takes some operational params,
+        // and returns a fn that takes the whole fluxlet state and returns a new state.
+        //
+        //     f.actions({ setName, setDateOfBirth })
+        //
         actions(namedActions) {
             Object.keys(namedActions).forEach(name => {
                 dispatchers[name] = createCall("action", name, namedActions[name], createDispatcher);
@@ -100,24 +149,53 @@ export default function(id) {
             return this;
         },
 
+        // Add named calculations to the fluxlet. Calculations are chained, the first is given the state
+        // from the action, and then return value is passed into the next calculation, and so on.
+        // They are also passed the original state prior to the action (as the 2nd arg).
+        //
+        //     f.calculations({ makeNameUppercase, calculateAge })
+        //
         calculations(namedCalculations) {
             calculations.push(...createCalls("calculation", namedCalculations, logCall));
             return this;
         },
 
+        // Add named side-effects to the fluxlet. All side-effects receive the same final state that
+        // resulted from the action and calculation chain, along with the original state and the map
+        // of action dispatchers. A side-effect must not change state, or directly dispatch an action
+        // from this same fluxlet (it may bind them to async events or timeouts though).
+        //
+        //     f.sideEffects({ renderEverything, makeHttpRequest })
+        //
         sideEffects(namedSideEffects) {
             sideEffects.push(...createCalls("sideEffect", namedSideEffects, logCall));
             return this;
         },
 
+        // Call a initialisation function with the map of action dispatchers.
+        //
+        //     f.init(({ setName }) => bindChangeEventToAction(setName))
+        //
         init(fn) {
             fn(dispatchers);
             return this;
         },
 
+        // Set logging levels
+        //
+        //     f.logging({ call: false })
+        //
         logging(categories) {
             Object.keys(categories).forEach(name => { logging[name] = categories[name] });
             return this;
+        },
+
+        // Remove a named fluxlet from the internal map of fluxlets and anonymise it
+        remove() {
+            if (id) {
+                delete fluxlets[id];
+                id = undefined;
+            }
         },
 
         // These tools are for testing and debugging on the console only, and should NEVER be called from code
@@ -133,26 +211,33 @@ export default function(id) {
             calculations: () => calculations,
             sideEffects: () => sideEffects
         }
-    }
+    };
 }
 
+// The locker holds the state of the fluxlet between dispatches.
+// This enforces the idea that within a dispatch state is strictly only updated prior to the side-effects.
 function createLocker(initialState) {
     let state = initialState;
     let claimed = false;
 
     return {
+        // When an action dispatcher claims the state, it gets locked so that no other action can
+        // claim it - preventing multiple actions from occurring in a single dispatch.
         claim(byAction) {
             if (claimed) {
-                throw ("Attempt to call the action '" + byAction + "' within action '" + claimed + "'");
+                // An error is throw if another action attempt to claim with the same dispatch
+                throw ("Attempt to dispatch action '" + byAction + "' within action '" + claimed + "'");
             }
             claimed = byAction || true;
             return state;
         },
 
+        // The state is saved before any side-effects run.
         swap(newState) {
             if (!claimed) {
                 throw "Attempted to swap an unclaimed state";
             }
+            // Return true if a new state is given
             if (newState !== state) {
                 state = newState;
                 return true;
@@ -160,6 +245,7 @@ function createLocker(initialState) {
             return false;
         },
 
+        // The dispatch releases the lock only after all side-effects have been called
         release() {
             if (!claimed) {
                 throw "Attempted to release an unclaimed state";
