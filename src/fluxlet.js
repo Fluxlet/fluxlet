@@ -55,7 +55,11 @@ function createFluxlet(id) {
 
     function log(category, type, name, args) {
         if (logging[category]) {
-            console.log(`${logId} ${category} ${type}:${name}` + (args && args.length ? `(${args})` : ""));
+            if (args && args.length) {
+                console.log(`${logId} ${category} ${type}:${name}`, ...args);
+            } else {
+                console.log(`${logId} ${category} ${type}:${name}`);
+            }
         }
     }
 
@@ -208,9 +212,6 @@ function createFluxlet(id) {
         //     f.init(({ setName }) => bindChangeEventToAction(setName))
         //
         init(fn) {
-            if (live) {
-                throw (`Attempt to init from ${logId} after the first action was dispatched`);
-            }
             fn(dispatchers);
             return this;
         },
