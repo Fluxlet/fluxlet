@@ -25,8 +25,11 @@ export default function(id) {
 
 function createFluxlet(id) {
 
-    // The locker stores the state of the fluxlet between dispatches
-    const locker = createLocker();
+    // The state of the fluxlet between dispatches
+    let lockedState = undefined;
+
+    // The current action in dispatch
+    let dispatching = undefined;
 
     // The map of action dispatchers
     const dispatchers = {};
@@ -44,23 +47,36 @@ function createFluxlet(id) {
         call: true
     };
 
+    // Handy string for use in log and error messages
+    const logId = `fluxlet:${id||'(anon)'}`;
+
+    // Set to true on the first action dispatch, after which the fluxlet may not be modified
+    var live = false;
+
     function log(category, type, name, args) {
         if (logging[category]) {
-            if (args && args.length) {
-                console.log("fluxlet:", id || "", category, type, ":", name, "(", ...args, ")");
-            } else {
-                console.log("fluxlet:", id || "", category, type, ":", name);
-            }
+            console.log(`${logId} ${category} ${type}:${name}` + (args && args.length ? `(${args})` : ""));
         }
     }
 
     // Create a dispatcher function for an action
     function createDispatcher(action, type, name) {
         return (...args) => {
+            // The fluxlet become 'live' on the first action dispatch
+            live = true;
+
             log("dispatch", type, name, args);
 
+            if (dispatching) {
+                // An error is thrown if another action attempt to claim with the same dispatch
+                throw (`Attempt to dispatch action '${name}' within action '${dispatching}' in ${logId}`);
+            }
+
+            // Lock the dispatcher for the current action, causing any nested dispatched to fail
+            dispatching = name;
+
             // Get starting state
-            const startState = locker.claim(name);
+            const startState = lockedState;
 
             try {
                 // Call the actions with the args given to the dispatcher, and then pass the state
@@ -75,7 +91,8 @@ function createFluxlet(id) {
                 });
 
                 // Store state and determine if a change has occurred
-                if (locker.swap(endState)) {
+                if (endState !== startState) {
+                    lockedState = endState;
 
                     // Call side-effects only if state has changed
                     sideEffects.forEach(sideEffect => {
@@ -84,8 +101,8 @@ function createFluxlet(id) {
                     });
                 }
             } finally {
-                // Release the state locker ready for another dispatch
-                locker.release();
+                // Release lock ready for another dispatch
+                dispatching = undefined;
             }
         };
     }
@@ -128,12 +145,17 @@ function createFluxlet(id) {
     }
 
     return {
-        // Set the initial state of the fluxlet
+        // Set (or modify) the initial state of the fluxlet
         state(state) {
+            if (live) {
+                throw (`Attempt to set state of ${logId} after the first action was dispatched`);
+            }
             log("create", "state", state);
-            locker.claim();
-            locker.swap(state);
-            locker.release();
+            if (typeof state === "function") {
+                lockedState = state(lockedState);
+            } else {
+                lockedState = state;
+            }
             return this;
         },
 
@@ -143,6 +165,9 @@ function createFluxlet(id) {
         //     f.actions({ setName, setDateOfBirth })
         //
         actions(namedActions) {
+            if (live) {
+                throw (`Attempt to add actions to ${logId} after the first action was dispatched`);
+            }
             Object.keys(namedActions).forEach(name => {
                 dispatchers[name] = createCall("action", name, namedActions[name], createDispatcher);
             });
@@ -156,6 +181,9 @@ function createFluxlet(id) {
         //     f.calculations({ makeNameUppercase, calculateAge })
         //
         calculations(namedCalculations) {
+            if (live) {
+                throw (`Attempt to add calculations to ${logId} after the first action was dispatched`);
+            }
             calculations.push(...createCalls("calculation", namedCalculations, logCall));
             return this;
         },
@@ -168,6 +196,9 @@ function createFluxlet(id) {
         //     f.sideEffects({ renderEverything, makeHttpRequest })
         //
         sideEffects(namedSideEffects) {
+            if (live) {
+                throw (`Attempt to add side-effects to ${logId} after the first action was dispatched`);
+            }
             sideEffects.push(...createCalls("sideEffect", namedSideEffects, logCall));
             return this;
         },
@@ -177,6 +208,9 @@ function createFluxlet(id) {
         //     f.init(({ setName }) => bindChangeEventToAction(setName))
         //
         init(fn) {
+            if (live) {
+                throw (`Attempt to init from ${logId} after the first action was dispatched`);
+            }
             fn(dispatchers);
             return this;
         },
@@ -201,56 +235,12 @@ function createFluxlet(id) {
         // These tools are for testing and debugging on the console only, and should NEVER be called from code
         debug: {
             id: () => id,
-            locker: () => locker,
-            state: () => {
-                var state = locker.claim('DEBUG');
-                locker.release();
-                return state;
-            },
+            live: () => live,
+            state: () => lockedState,
+            dispatching: () => dispatching,
             dispatchers: () => dispatchers,
             calculations: () => calculations,
             sideEffects: () => sideEffects
-        }
-    };
-}
-
-// The locker holds the state of the fluxlet between dispatches.
-// This enforces the idea that within a dispatch state is strictly only updated prior to the side-effects.
-function createLocker(initialState) {
-    let state = initialState;
-    let claimed = false;
-
-    return {
-        // When an action dispatcher claims the state, it gets locked so that no other action can
-        // claim it - preventing multiple actions from occurring in a single dispatch.
-        claim(byAction) {
-            if (claimed) {
-                // An error is throw if another action attempt to claim with the same dispatch
-                throw ("Attempt to dispatch action '" + byAction + "' within action '" + claimed + "'");
-            }
-            claimed = byAction || true;
-            return state;
-        },
-
-        // The state is saved before any side-effects run.
-        swap(newState) {
-            if (!claimed) {
-                throw "Attempted to swap an unclaimed state";
-            }
-            // Return true if a new state is given
-            if (newState !== state) {
-                state = newState;
-                return true;
-            }
-            return false;
-        },
-
-        // The dispatch releases the lock only after all side-effects have been called
-        release() {
-            if (!claimed) {
-                throw "Attempted to release an unclaimed state";
-            }
-            claimed = false;
         }
     };
 }
