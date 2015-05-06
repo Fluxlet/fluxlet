@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><title>src/fluxlet</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content="../"><meta name="groc-document-path" content="src/fluxlet"><meta name="groc-project-path" content="src/fluxlet.js"><link rel="stylesheet" type="text/css" media="all" href="../assets/style.css"><script type="text/javascript" src="../assets/behavior.js"></script><body><div id="meta"><div class="file-path">src/fluxlet.js</div></div><div id="document"><div class="segment"><div class="comments "><div class="wrapper"><h1 id="fluxlet">Fluxlet</h1></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Fluxlet uses a fluent API to construct an instance, a fluxlet can be named or annonymous.</p></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Map of named fluxlets</p></div></div><div class="code"><div class="wrapper"><span class="hljs-keyword">const</span> fluxlets = {};</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Create or retrieve a fluxlet</p></div></div><div class="code"><div class="wrapper"><span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(id)</span> </span>{</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Return an existing fluxlet by id if it exists</p></div></div><div class="code"><div class="wrapper">    <span class="hljs-keyword">if</span> (id &amp;&amp; fluxlets[id]) {
+<!DOCTYPE html><html lang="en"><head><title>fluxlet</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content=""><meta name="groc-document-path" content="fluxlet"><meta name="groc-project-path" content="src/fluxlet.js"><link rel="stylesheet" type="text/css" media="all" href="assets/style.css"><script type="text/javascript" src="assets/behavior.js"></script><body><div id="meta"><div class="file-path">src/fluxlet.js</div></div><div id="document"><div class="segment"><div class="comments "><div class="wrapper"><h1 id="fluxlet">Fluxlet</h1></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Fluxlet uses a fluent API to construct an instance, a fluxlet can be named or annonymous.</p></div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Internal map of named fluxlets</p></div></div><div class="code"><div class="wrapper"><span class="hljs-keyword">const</span> fluxlets = {};</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Create or retrieve a fluxlet</p></div></div><div class="code"><div class="wrapper"><span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(id)</span> </span>{</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Return an existing fluxlet by id if it exists</p></div></div><div class="code"><div class="wrapper">    <span class="hljs-keyword">if</span> (id &amp;&amp; fluxlets[id]) {
         <span class="hljs-keyword">return</span> fluxlets[id];
     }
 
@@ -9,34 +9,39 @@
     <span class="hljs-keyword">return</span> instance;
 }
 
-<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createFluxlet</span><span class="hljs-params">(id)</span> </span>{</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>The locker stores the state of the fluxlet between dispatches</p></div></div><div class="code"><div class="wrapper">    <span class="hljs-keyword">const</span> locker = createLocker();</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>The map of action dispatchers</p></div></div><div class="code"><div class="wrapper">    <span class="hljs-keyword">const</span> dispatchers = {};</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>The list of state calculation functions</p></div></div><div class="code"><div class="wrapper">    <span class="hljs-keyword">const</span> calculations = [];</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>The list of side effect functions</p></div></div><div class="code"><div class="wrapper">    <span class="hljs-keyword">const</span> sideEffects = [];</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Log category settings</p></div></div><div class="code"><div class="wrapper">    <span class="hljs-keyword">const</span> logging = {
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createFluxlet</span><span class="hljs-params">(id)</span> </span>{</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>The state of the fluxlet between dispatches</p></div></div><div class="code"><div class="wrapper">    <span class="hljs-keyword">let</span> lockedState = <span class="hljs-literal">undefined</span>;</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>The current action in dispatch</p></div></div><div class="code"><div class="wrapper">    <span class="hljs-keyword">let</span> dispatching = <span class="hljs-literal">undefined</span>;</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>The map of action dispatchers</p></div></div><div class="code"><div class="wrapper">    <span class="hljs-keyword">const</span> dispatchers = {};</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>The list of state calculation functions</p></div></div><div class="code"><div class="wrapper">    <span class="hljs-keyword">const</span> calculations = [];</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>The list of side effect functions</p></div></div><div class="code"><div class="wrapper">    <span class="hljs-keyword">const</span> sideEffects = [];</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Log category settings</p></div></div><div class="code"><div class="wrapper">    <span class="hljs-keyword">const</span> logging = {
         register: <span class="hljs-literal">true</span>,
         dispatch: <span class="hljs-literal">true</span>,
         call: <span class="hljs-literal">true</span>
-    };
+    };</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Handy string for use in log and error messages</p></div></div><div class="code"><div class="wrapper">    <span class="hljs-keyword">const</span> logId = <span class="hljs-string">`fluxlet:<span class="hljs-subst">${id||'(anon)'}</span>`</span>;</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Set to true on the first action dispatch, after which the fluxlet may not be modified</p></div></div><div class="code"><div class="wrapper">    <span class="hljs-keyword">var</span> live = <span class="hljs-literal">false</span>;
 
     <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">log</span><span class="hljs-params">(category, type, name, args)</span> </span>{
         <span class="hljs-keyword">if</span> (logging[category]) {
             <span class="hljs-keyword">if</span> (args &amp;&amp; args.length) {
-                <span class="hljs-built_in">console</span>.log(<span class="hljs-string">"fluxlet:"</span>, id || <span class="hljs-string">""</span>, category, type, <span class="hljs-string">":"</span>, name, <span class="hljs-string">"("</span>, ...args, <span class="hljs-string">")"</span>);
+                <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`<span class="hljs-subst">${logId}</span> <span class="hljs-subst">${category}</span> <span class="hljs-subst">${type}</span>:<span class="hljs-subst">${name}</span>`</span>, ...args);
             } <span class="hljs-keyword">else</span> {
-                <span class="hljs-built_in">console</span>.log(<span class="hljs-string">"fluxlet:"</span>, id || <span class="hljs-string">""</span>, category, type, <span class="hljs-string">":"</span>, name);
+                <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`<span class="hljs-subst">${logId}</span> <span class="hljs-subst">${category}</span> <span class="hljs-subst">${type}</span>:<span class="hljs-subst">${name}</span>`</span>);
             }
         }
     }</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Create a dispatcher function for an action</p></div></div><div class="code"><div class="wrapper">    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createDispatcher</span><span class="hljs-params">(action, type, name)</span> </span>{
-        <span class="hljs-keyword">return</span> (...args) =&gt; {
-            log(<span class="hljs-string">"dispatch"</span>, type, name, args);</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Get starting state</p></div></div><div class="code"><div class="wrapper">            <span class="hljs-keyword">const</span> startState = locker.claim(name);
+        <span class="hljs-keyword">return</span> (...args) =&gt; {</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>The fluxlet become &#39;live&#39; on the first action dispatch</p></div></div><div class="code"><div class="wrapper">            live = <span class="hljs-literal">true</span>;
+
+            log(<span class="hljs-string">"dispatch"</span>, type, name, args);
+
+            <span class="hljs-keyword">if</span> (dispatching) {</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>An error is thrown if another action attempt to claim with the same dispatch</p></div></div><div class="code"><div class="wrapper">                <span class="hljs-keyword">throw</span> (<span class="hljs-string">`Attempt to dispatch action '<span class="hljs-subst">${name}</span>' within action '<span class="hljs-subst">${dispatching}</span>' in <span class="hljs-subst">${logId}</span>`</span>);
+            }</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Lock the dispatcher for the current action, causing any nested dispatched to fail</p></div></div><div class="code"><div class="wrapper">            dispatching = name;</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Get starting state</p></div></div><div class="code"><div class="wrapper">            <span class="hljs-keyword">const</span> startState = lockedState;
 
             <span class="hljs-keyword">try</span> {</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Call the actions with the args given to the dispatcher, and then pass the state
 from the locker to the returned function</p></div></div><div class="code"><div class="wrapper">                <span class="hljs-keyword">let</span> endState = action(...args)(startState);</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Chain calculation calls</p></div></div><div class="code"><div class="wrapper">                calculations.forEach(calculation =&gt; {</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>passing the state return from one into the next,
 the starting state prior to the action is also given.</p></div></div><div class="code"><div class="wrapper">                    endState = calculation(endState, startState);
-                });</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Store state and determine if a change has occurred</p></div></div><div class="code"><div class="wrapper">                <span class="hljs-keyword">if</span> (locker.swap(endState)) {</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Call side-effects only if state has changed</p></div></div><div class="code"><div class="wrapper">                    sideEffects.forEach(sideEffect =&gt; {</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>passing the new state, original state, and all action dispatchers</p></div></div><div class="code"><div class="wrapper">                        sideEffect(endState, startState, dispatchers);
+                });</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Store state and determine if a change has occurred</p></div></div><div class="code"><div class="wrapper">                <span class="hljs-keyword">if</span> (endState !== startState) {
+                    lockedState = endState;</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Call side-effects only if state has changed</p></div></div><div class="code"><div class="wrapper">                    sideEffects.forEach(sideEffect =&gt; {</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>passing the new state, original state, and all action dispatchers</p></div></div><div class="code"><div class="wrapper">                        sideEffect(endState, startState, dispatchers);
                     });
                 }
-            } <span class="hljs-keyword">finally</span> {</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Release the state locker ready for another dispatch</p></div></div><div class="code"><div class="wrapper">                locker.release();
+            } <span class="hljs-keyword">finally</span> {</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Release lock ready for another dispatch</p></div></div><div class="code"><div class="wrapper">                dispatching = <span class="hljs-literal">undefined</span>;
             }
         };
-    }</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Wrapper for calculation and sideEffect functions, that simply logs the call</p></div></div><div class="code"><div class="wrapper">    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">logCall</span><span class="hljs-params">(fn, name, type)</span> </span>{
+    }</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Wrapper for calculation and sideEffect functions, that simply logs the call</p></div></div><div class="code"><div class="wrapper">    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">logCall</span><span class="hljs-params">(fn, type, name)</span> </span>{
         <span class="hljs-keyword">return</span> (...args) =&gt; {
             log(<span class="hljs-string">"call"</span>, type, name, [args[<span class="hljs-number">0</span>]]);
             <span class="hljs-keyword">return</span> fn(...args);
@@ -64,15 +69,23 @@ the starting state prior to the action is also given.</p></div></div><div class=
         <span class="hljs-keyword">return</span> <span class="hljs-built_in">Object</span>.keys(obj).map(name =&gt; createCall(type, name, obj[name], wrap));
     }
 
-    <span class="hljs-keyword">return</span> {</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Set the initial state of the fluxlet</p></div></div><div class="code"><div class="wrapper">        state(state) {
+    <span class="hljs-keyword">return</span> {</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Set (or modify) the initial state of the fluxlet</p></div></div><div class="code"><div class="wrapper">        state(state) {
+            <span class="hljs-keyword">if</span> (live) {
+                <span class="hljs-keyword">throw</span> (<span class="hljs-string">`Attempt to set state of <span class="hljs-subst">${logId}</span> after the first action was dispatched`</span>);
+            }
             log(<span class="hljs-string">"create"</span>, <span class="hljs-string">"state"</span>, state);
-            locker.claim();
-            locker.swap(state);
-            locker.release();
+            <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> state === <span class="hljs-string">"function"</span>) {
+                lockedState = state(lockedState);
+            } <span class="hljs-keyword">else</span> {
+                lockedState = state;
+            }
             <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
         },</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Add named actions to the fluxlet. An action takes some operational params,
 and returns a fn that takes the whole fluxlet state and returns a new state.</p>
 <pre><code>f.actions({ setName, setDateOfBirth })</code></pre></div></div><div class="code"><div class="wrapper">        actions(namedActions) {
+            <span class="hljs-keyword">if</span> (live) {
+                <span class="hljs-keyword">throw</span> (<span class="hljs-string">`Attempt to add actions to <span class="hljs-subst">${logId}</span> after the first action was dispatched`</span>);
+            }
             <span class="hljs-built_in">Object</span>.keys(namedActions).forEach(name =&gt; {
                 dispatchers[name] = createCall(<span class="hljs-string">"action"</span>, name, namedActions[name], createDispatcher);
             });
@@ -81,6 +94,9 @@ and returns a fn that takes the whole fluxlet state and returns a new state.</p>
 from the action, and then return value is passed into the next calculation, and so on.
 They are also passed the original state prior to the action (as the 2nd arg).</p>
 <pre><code>f.calculations({ makeNameUppercase, calculateAge })</code></pre></div></div><div class="code"><div class="wrapper">        calculations(namedCalculations) {
+            <span class="hljs-keyword">if</span> (live) {
+                <span class="hljs-keyword">throw</span> (<span class="hljs-string">`Attempt to add calculations to <span class="hljs-subst">${logId}</span> after the first action was dispatched`</span>);
+            }
             calculations.push(...createCalls(<span class="hljs-string">"calculation"</span>, namedCalculations, logCall));
             <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
         },</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Add named side-effects to the fluxlet. All side-effects receive the same final state that
@@ -88,6 +104,9 @@ resulted from the action and calculation chain, along with the original state an
 of action dispatchers. A side-effect must not change state, or directly dispatch an action
 from this same fluxlet (it may bind them to async events or timeouts though).</p>
 <pre><code>f.sideEffects({ renderEverything, makeHttpRequest })</code></pre></div></div><div class="code"><div class="wrapper">        sideEffects(namedSideEffects) {
+            <span class="hljs-keyword">if</span> (live) {
+                <span class="hljs-keyword">throw</span> (<span class="hljs-string">`Attempt to add side-effects to <span class="hljs-subst">${logId}</span> after the first action was dispatched`</span>);
+            }
             sideEffects.push(...createCalls(<span class="hljs-string">"sideEffect"</span>, namedSideEffects, logCall));
             <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>;
         },</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Call a initialisation function with the map of action dispatchers.</p>
@@ -105,41 +124,12 @@ from this same fluxlet (it may bind them to async events or timeouts though).</p
             }
         },</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>These tools are for testing and debugging on the console only, and should NEVER be called from code</p></div></div><div class="code"><div class="wrapper">        debug: {
             id: () =&gt; id,
-            locker: () =&gt; locker,
-            state: () =&gt; {
-                <span class="hljs-keyword">var</span> state = locker.claim(<span class="hljs-string">'DEBUG'</span>);
-                locker.release();
-                <span class="hljs-keyword">return</span> state;
-            },
+            live: () =&gt; live,
+            state: () =&gt; lockedState,
+            dispatching: () =&gt; dispatching,
             dispatchers: () =&gt; dispatchers,
             calculations: () =&gt; calculations,
             sideEffects: () =&gt; sideEffects
-        }
-    };
-}</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>The locker holds the state of the fluxlet between dispatches.
-This enforces the idea that within a dispatch state is strictly only updated prior to the side-effects.</p></div></div><div class="code"><div class="wrapper"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">createLocker</span><span class="hljs-params">(initialState)</span> </span>{
-    <span class="hljs-keyword">let</span> state = initialState;
-    <span class="hljs-keyword">let</span> claimed = <span class="hljs-literal">false</span>;
-
-    <span class="hljs-keyword">return</span> {</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>When an action dispatcher claims the state, it gets locked so that no other action can
-claim it - preventing multiple actions from occurring in a single dispatch.</p></div></div><div class="code"><div class="wrapper">        claim(byAction) {
-            <span class="hljs-keyword">if</span> (claimed) {</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>An error is throw if another action attempt to claim with the same dispatch</p></div></div><div class="code"><div class="wrapper">                <span class="hljs-keyword">throw</span> (<span class="hljs-string">"Attempt to dispatch action '"</span> + byAction + <span class="hljs-string">"' within action '"</span> + claimed + <span class="hljs-string">"'"</span>);
-            }
-            claimed = byAction || <span class="hljs-literal">true</span>;
-            <span class="hljs-keyword">return</span> state;
-        },</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>The state is saved before any side-effects run.</p></div></div><div class="code"><div class="wrapper">        swap(newState) {
-            <span class="hljs-keyword">if</span> (!claimed) {
-                <span class="hljs-keyword">throw</span> <span class="hljs-string">"Attempted to swap an unclaimed state"</span>;
-            }</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Return true if a new state is given</p></div></div><div class="code"><div class="wrapper">            <span class="hljs-keyword">if</span> (newState !== state) {
-                state = newState;
-                <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
-            }
-            <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
-        },</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>The dispatch releases the lock only after all side-effects have been called</p></div></div><div class="code"><div class="wrapper">        release() {
-            <span class="hljs-keyword">if</span> (!claimed) {
-                <span class="hljs-keyword">throw</span> <span class="hljs-string">"Attempted to release an unclaimed state"</span>;
-            }
-            claimed = <span class="hljs-literal">false</span>;
         }
     };
 }</div></div></div></div></body></html>
