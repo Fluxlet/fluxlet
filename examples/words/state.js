@@ -1,6 +1,6 @@
 import { deepFreeze } from "../../src/utils";
 
 export default {
-    words: "",
-    count: 0
+    words: null,
+    count: null
 }
