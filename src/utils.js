@@ -1,4 +1,4 @@
-import { forEach, clone, isFunction, isObject, isString, isEqual } from "underscore";
+import { forEach, clone, isEqual } from "underscore";
 
 /**
  * Recursively freeze an object/array making it immutable
@@ -22,17 +22,21 @@ function cloneAndSet(container, key, value) {
 }
 
 export function update(path, value) {
-    if (isString(path)) {
+    if (path && path.split) {
         path = path.split('.');
     }
 
-    if (!path.length) throw new TypeError("path cannot be empty");
+    if (!path || !path.length || !path.slice) {
+        throw new TypeError("path should be a non-empty String or Array");
+    }
 
-    var getValue = isFunction(value) ? value : () => value;
+    var getValue = typeof value === "function" ? value : () => value;
 
     return (container) => {
         function doUpdate(container, idx) {
-            if (!isObject(container)) throw new TypeError("update expects its container parameter to be an Object or an Array, at: " + path.slice(0, idx) + " got: " + container);
+            if (!container || !(typeof container === "object")) {
+                throw new TypeError(`update of path '${path.join('.')}' failed, expecting an Object or Array at: '${path.slice(0, idx)}' got: ${container}`);
+            }
 
             var key = path[idx];
             var value = idx + 1 < path.length ? doUpdate(container[key], idx + 1) : getValue(container[key]);

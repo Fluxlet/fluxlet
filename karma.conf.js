@@ -15,7 +15,7 @@ module.exports = function (config) {
 
         // list of files / patterns to load in the browser
         files: [
-            'src/fluxlet.js',
+            'src/*.js',
             'test/*.js',
             'node_modules/underscore/underscore.js',
             'node_modules/jquery/dist/jquery.js',
