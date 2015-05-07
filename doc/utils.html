@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><title>utils</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content=""><meta name="groc-document-path" content="utils"><meta name="groc-project-path" content="src/utils.js"><link rel="stylesheet" type="text/css" media="all" href="assets/style.css"><script type="text/javascript" src="assets/behavior.js"></script><body><div id="meta"><div class="file-path">src/utils.js</div></div><div id="document"><div class="segment"><div class="code"><div class="wrapper"><span class="hljs-keyword">import</span> { forEach, clone, isFunction, isObject, isString, isEqual } <span class="hljs-keyword">from</span> <span class="hljs-string">"underscore"</span>;</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Recursively freeze an object/array making it immutable</p></div></div><div class="code"><div class="wrapper"><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">deepFreeze</span><span class="hljs-params">(v)</span> </span>{
+<!DOCTYPE html><html lang="en"><head><title>utils</title></head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0"><meta name="groc-relative-root" content=""><meta name="groc-document-path" content="utils"><meta name="groc-project-path" content="src/utils.js"><link rel="stylesheet" type="text/css" media="all" href="assets/style.css"><script type="text/javascript" src="assets/behavior.js"></script><body><div id="meta"><div class="file-path">src/utils.js</div></div><div id="document"><div class="segment"><div class="code"><div class="wrapper"><span class="hljs-keyword">import</span> { forEach, clone, isEqual } <span class="hljs-keyword">from</span> <span class="hljs-string">"underscore"</span>;</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Recursively freeze an object/array making it immutable</p></div></div><div class="code"><div class="wrapper"><span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">deepFreeze</span><span class="hljs-params">(v)</span> </span>{
     <span class="hljs-keyword">if</span> (v != <span class="hljs-literal">null</span> &amp;&amp; <span class="hljs-keyword">typeof</span> v === <span class="hljs-string">'object'</span> &amp;&amp; !<span class="hljs-built_in">Object</span>.isFrozen(v)) {
         <span class="hljs-built_in">Object</span>.freeze(v);
         forEach(v, deepFreeze);
@@ -17,17 +17,21 @@
 }
 
 <span class="hljs-keyword">export</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">update</span><span class="hljs-params">(path, value)</span> </span>{
-    <span class="hljs-keyword">if</span> (isString(path)) {
+    <span class="hljs-keyword">if</span> (path &amp;&amp; path.split) {
         path = path.split(<span class="hljs-string">'.'</span>);
     }
 
-    <span class="hljs-keyword">if</span> (!path.length) <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">TypeError</span>(<span class="hljs-string">"path cannot be empty"</span>);
+    <span class="hljs-keyword">if</span> (!path || !path.length || !path.slice) {
+        <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">TypeError</span>(<span class="hljs-string">"path should be a non-empty String or Array"</span>);
+    }
 
-    <span class="hljs-keyword">var</span> getValue = isFunction(value) ? value : () =&gt; value;
+    <span class="hljs-keyword">var</span> getValue = <span class="hljs-keyword">typeof</span> value === <span class="hljs-string">"function"</span> ? value : () =&gt; value;
 
     <span class="hljs-keyword">return</span> (container) =&gt; {
         <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">doUpdate</span><span class="hljs-params">(container, idx)</span> </span>{
-            <span class="hljs-keyword">if</span> (!isObject(container)) <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">TypeError</span>(<span class="hljs-string">"update expects its container parameter to be an Object or an Array, at: "</span> + path.slice(<span class="hljs-number">0</span>, idx) + <span class="hljs-string">" got: "</span> + container);
+            <span class="hljs-keyword">if</span> (!container || !(<span class="hljs-keyword">typeof</span> container === <span class="hljs-string">"object"</span>)) {
+                <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">TypeError</span>(<span class="hljs-string">`update of path '<span class="hljs-subst">${path.join('.')}</span>' failed, expecting an Object or Array at: '<span class="hljs-subst">${path.slice(0, idx)}</span>' got: <span class="hljs-subst">${container}</span>`</span>);
+            }
 
             <span class="hljs-keyword">var</span> key = path[idx];
             <span class="hljs-keyword">var</span> value = idx + <span class="hljs-number">1</span> &lt; path.length ? doUpdate(container[key], idx + <span class="hljs-number">1</span>) : getValue(container[key]);

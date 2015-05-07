@@ -2,16 +2,8 @@
 <span class="hljs-keyword">import</span> initialState <span class="hljs-keyword">from</span> <span class="hljs-string">"./state"</span>;
 <span class="hljs-keyword">import</span> { setWords, countWords, renderWords, renderCount } <span class="hljs-keyword">from</span> <span class="hljs-string">"./words"</span>;
 
-<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
-    fluxlet(<span class="hljs-string">"words"</span>)
-        .state(initialState)
-        .actions({ setWords })
-        .calculations({ countWords })
-        .sideEffects({ renderWords, renderCount })
-        .init(bindReady);
-}
-
-<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">bindReady</span><span class="hljs-params">({ setWords })</span> </span>{
+<span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Create a new fluxlet (with a name)</p></div></div><div class="code"><div class="wrapper">    fluxlet(<span class="hljs-string">"words"</span>)</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Set the initial state</p></div></div><div class="code"><div class="wrapper">        .state(initialState)</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Register action functions (a dispatcher will be create for each of these)</p></div></div><div class="code"><div class="wrapper">        .actions({ setWords })</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Register the calculation functions (these are called in all dispatchers)</p></div></div><div class="code"><div class="wrapper">        .calculations({ countWords })</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Register side effect function (these are called in all dispatchers)</p></div></div><div class="code"><div class="wrapper">        .sideEffects({ renderWords, renderCount })</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Call the bindReady fn passing all dispatchers by their action name</p></div></div><div class="code"><div class="wrapper">        .init(bindReady);
+}</div></div></div><div class="segment"><div class="comments "><div class="wrapper"><p>Listen for the global &#39;ready&#39; event and kick off the first action dispatch</p></div></div><div class="code"><div class="wrapper"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">bindReady</span><span class="hljs-params">({ setWords })</span> </span>{
     <span class="hljs-built_in">document</span>.addEventListener(<span class="hljs-string">"DOMContentLoaded"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{
         [<span class="hljs-string">"fluxlet example"</span>, <span class="hljs-string">"counts words"</span>, <span class="hljs-string">"counts words"</span>, <span class="hljs-string">"easy as pie, eh?"</span>].forEach((str, i) =&gt; {
             <span class="hljs-built_in">window</span>.setTimeout(() =&gt; {
