@@ -39,8 +39,7 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
                 "pageTitle": "examples/words/index",
                 "title": "index"
               },
-              "depth": 3,
-              "outline": []
+              "depth": 3
             }, {
               "type": "file",
               "data": {
@@ -59,8 +58,7 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
                 "pageTitle": "examples/words/setup",
                 "title": "setup"
               },
-              "depth": 3,
-              "outline": []
+              "depth": 3
             }, {
               "type": "file",
               "data": {
@@ -79,8 +77,7 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
                 "pageTitle": "examples/words/state",
                 "title": "state"
               },
-              "depth": 3,
-              "outline": []
+              "depth": 3
             }, {
               "type": "file",
               "data": {
@@ -99,8 +96,7 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
                 "pageTitle": "examples/words/test",
                 "title": "test"
               },
-              "depth": 3,
-              "outline": []
+              "depth": 3
             }, {
               "type": "file",
               "data": {
@@ -119,8 +115,7 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
                 "pageTitle": "examples/words/words",
                 "title": "words"
               },
-              "depth": 3,
-              "outline": []
+              "depth": 3
             }
           ]
         }
@@ -173,8 +168,7 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
         "pageTitle": "testlet",
         "title": "testlet"
       },
-      "depth": 1,
-      "outline": []
+      "depth": 1
     }, {
       "type": "file",
       "data": {
@@ -193,8 +187,7 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
         "pageTitle": "utils",
         "title": "utils"
       },
-      "depth": 1,
-      "outline": []
+      "depth": 1
     }
   ];
 
