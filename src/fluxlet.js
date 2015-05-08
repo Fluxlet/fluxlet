@@ -44,7 +44,8 @@ function createFluxlet(id) {
     const logging = {
         register: true,
         dispatch: true,
-        call: true
+        call: true,
+        state: false
     };
 
     // Handy string for use in log and error messages
@@ -82,6 +83,8 @@ function createFluxlet(id) {
             // Get starting state
             const startState = lockedState;
 
+            log("state", "before", name, [startState]);
+
             try {
                 // Call the actions with the args given to the dispatcher, and then pass the state
                 // from the locker to the returned function
@@ -97,6 +100,8 @@ function createFluxlet(id) {
                 // Store state and determine if a change has occurred
                 if (endState !== startState) {
                     lockedState = endState;
+
+                    log("state", "after", name, [endState]);
 
                     // Call side-effects only if state has changed
                     sideEffects.forEach(sideEffect => {
