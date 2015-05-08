@@ -84,5 +84,12 @@ describe('Fluxlet', () => {
                 expect(testD.then).not.toHaveBeenCalled();
             });
         });
+
+        it('must return a function', () => {
+            const testE = actionSpy(() => { foo: "bar" });
+            f.actions({ testE });
+
+            expect(() => { f.debug.dispatchers().testE() }).toThrowError();
+        });
     });
 });

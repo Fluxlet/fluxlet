@@ -54,7 +54,8 @@ function createFluxlet(id) {
     // Handy string for use in log and error messages
     const logId = `fluxlet:${id||'(anon)'}`;
 
-    // Set to true on the first action dispatch, after which the fluxlet may not be modified
+    // Set to true on the first action dispatch,
+    // after which certain aspects of the fluxlet may not be modified
     var live = false;
 
     function log(category, type, name, args) {
@@ -69,6 +70,8 @@ function createFluxlet(id) {
 
     // Create a dispatcher function for an action
     function createDispatcher(action, type, name) {
+        // This is the dispatcher function, created for the given action.
+        // It args are passed through to the action function later.
         return (...args) => {
             // The fluxlet become 'live' on the first action dispatch
             live = true;
@@ -76,46 +79,53 @@ function createFluxlet(id) {
             log("dispatch", type, name, args);
 
             if (dispatching) {
-                // An error is thrown if another action attempt to claim with the same dispatch
+                // This dispatch will fail if called directly from within another dispatch
                 throw (`Attempt to dispatch action '${name}' within action '${dispatching}' in ${logId}`);
             }
 
-            // Lock the dispatcher for the current action, causing any nested dispatched to fail
+            // Lock the dispatcher for the current action
             dispatching = name;
 
-            // Get starting state
+            // Get the starting state
             const startState = lockedState;
 
             log("state", "before", name, [startState]);
 
             try {
-                // Call the actions with the args given to the dispatcher, and then pass the state
-                // from the locker to the returned function
-                let endState = action(...args)(startState);
+                // Call the action with the args given to the dispatcher
+                const stateManipulator = action(...args);
+
+                // We expect the action to return a function that will manipulate the the state
+                if (typeof stateManipulator !== "function") {
+                    throw new TypeError(`Action '${name}' did not return a function as expected in ${logId}`);
+                }
+
+                // Pass the state the to the function returned from the action
+                let newState = stateManipulator(startState);
 
                 // Validate the state returned by the action
-                stateValidator && endState !== startState && stateValidator(endState);
+                stateValidator && newState !== startState && stateValidator(newState);
 
                 // Chain calculation calls
                 calculations.forEach(calculation => {
                     // passing the state return from one into the next,
                     // the starting state prior to the action is also given.
-                    endState = calculation(endState, startState);
+                    newState = calculation(newState, startState);
 
                     // Validate the state returned by the calculation
-                    stateValidator && endState !== startState && stateValidator(endState);
+                    stateValidator && newState !== startState && stateValidator(newState);
                 });
 
                 // Store state and determine if a change has occurred
-                if (endState !== startState) {
-                    lockedState = endState;
+                if (newState !== startState) {
+                    lockedState = newState;
 
-                    log("state", "after", name, [endState]);
+                    log("state", "after", name, [newState]);
 
                     // Call side-effects only if state has changed
                     sideEffects.forEach(sideEffect => {
                         // passing the new state, original state, and all action dispatchers
-                        sideEffect(endState, startState, dispatchers);
+                        sideEffect(newState, startState, dispatchers);
                     });
                 }
             } finally {
