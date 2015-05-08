@@ -25,6 +25,9 @@ export default function(id) {
 
 function createFluxlet(id) {
 
+    // A function that validates states as they are passed around
+    let stateValidator = undefined;
+
     // The state of the fluxlet between dispatches
     let lockedState = undefined;
 
@@ -90,11 +93,17 @@ function createFluxlet(id) {
                 // from the locker to the returned function
                 let endState = action(...args)(startState);
 
+                // Validate the state returned by the action
+                stateValidator && endState !== startState && stateValidator(endState);
+
                 // Chain calculation calls
                 calculations.forEach(calculation => {
                     // passing the state return from one into the next,
                     // the starting state prior to the action is also given.
                     endState = calculation(endState, startState);
+
+                    // Validate the state returned by the calculation
+                    stateValidator && endState !== startState && stateValidator(endState);
                 });
 
                 // Store state and determine if a change has occurred
@@ -158,6 +167,17 @@ function createFluxlet(id) {
     }
 
     return {
+        // Set the state validator function, generally only used in testing, it is expected to throw an error if it
+        // finds the state to be invalid. It will be called, passing the state as the only arguments, on setting of
+        // the initial state, and after each action and calculation if a new state has been returned.
+        validator(validator) {
+            if (lockedState) {
+                throw ("The state validator should be set before the initial state of the fluxlet is set");
+            }
+            stateValidator = validator;
+            return this;
+        },
+
         // Set (or modify) the initial state of the fluxlet
         state(state) {
             if (live) {
@@ -169,6 +189,7 @@ function createFluxlet(id) {
             } else {
                 lockedState = state;
             }
+            stateValidator && stateValidator(lockedState);
             return this;
         },
 
@@ -243,6 +264,7 @@ function createFluxlet(id) {
         debug: {
             id: () => id,
             live: () => live,
+            validator: () => stateValidator,
             state: () => lockedState,
             dispatching: () => dispatching,
             dispatchers: () => dispatchers,

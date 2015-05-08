@@ -23,6 +23,12 @@ export var given = {
         return this;
     },
 
+    // Set the state validator function, this should be called before setting the initial state
+    validator(validator) {
+        instance.validator(validator);
+        return this;
+    },
+
     // Set the initial state.
     // Generally called in a beforeEach with the default state, but may also be called in
     // individual test cases to override parts of the default state.
