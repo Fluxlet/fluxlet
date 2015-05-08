@@ -9,9 +9,9 @@ var gathered;
 
 export var given = {
 
-    // Create a fluxlet for testing against (id is optional)
-    fluxlet(id) {
-        instance = fluxlet(id)
+    // Create a fluxlet for testing against
+    fluxlet() {
+        instance = fluxlet()
             // Register a side effect that gathers the state and end states that are passed
             // to the side effects after the action and calculation fns have been called in a dispatch.
             .sideEffects({
