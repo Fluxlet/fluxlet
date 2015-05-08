@@ -153,6 +153,10 @@ function createFluxlet(id) {
         return Object.keys(obj).map(name => createCall(type, name, obj[name], wrap));
     }
 
+    function liveError(type, names) {
+        return `Attempt to add ${type} ${names} to ${logId} after the first action was dispatched`;
+    }
+
     return {
         // Set (or modify) the initial state of the fluxlet
         state(state) {
@@ -175,7 +179,7 @@ function createFluxlet(id) {
         //
         actions(namedActions) {
             if (live) {
-                throw (`Attempt to add actions to ${logId} after the first action was dispatched`);
+                throw liveError('actions', Object.keys(namedActions));
             }
             Object.keys(namedActions).forEach(name => {
                 dispatchers[name] = createCall("action", name, namedActions[name], createDispatcher);
@@ -191,7 +195,7 @@ function createFluxlet(id) {
         //
         calculations(namedCalculations) {
             if (live) {
-                throw (`Attempt to add calculations to ${logId} after the first action was dispatched`);
+                throw liveError('calculations', Object.keys(namedCalculations));
             }
             calculations.push(...createCalls("calculation", namedCalculations, logCall));
             return this;
@@ -205,9 +209,6 @@ function createFluxlet(id) {
         //     f.sideEffects({ renderEverything, makeHttpRequest })
         //
         sideEffects(namedSideEffects) {
-            if (live) {
-                throw (`Attempt to add side-effects to ${logId} after the first action was dispatched`);
-            }
             sideEffects.push(...createCalls("sideEffect", namedSideEffects, logCall));
             return this;
         },
