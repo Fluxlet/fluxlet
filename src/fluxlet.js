@@ -40,6 +40,9 @@ function createFluxlet(id) {
     // The list of state calculation functions
     const calculations = [];
 
+    // All registered calculation names, for requirements checking (value is always true)
+    const calculationNames = {};
+
     // The list of side effect functions
     const sideEffects = [];
 
@@ -170,12 +173,12 @@ function createFluxlet(id) {
     function createCall(type, name, fnOrCond, wrap) {
         log("register", type, name);
 
-        if (fnOrCond && fnOrCond.when && fnOrCond.when.apply && fnOrCond.then && fnOrCond.then.apply) {
-            return conditionalCall(fnOrCond.when, wrap(fnOrCond.then, type, name));
+        if (fnOrCond && fnOrCond.then && fnOrCond.then.apply) {
+            return conditionalCall(fnOrCond.when || (() => true), wrap(fnOrCond.then, type, name));
         } else if (fnOrCond && fnOrCond.apply) {
             return wrap(fnOrCond, type, name);
         } else {
-            throw new TypeError(type + " '" + name + "' must be a function or an object containing a when & then function");
+            throw new TypeError(`${type} '${name}' must be a function or an object containing a when & then function`);
         }
     }
 
@@ -191,12 +194,32 @@ function createFluxlet(id) {
         };
     }
 
+    // Create the wrappers for all named calculation or side effects given in obj
     function createCalls(type, obj, wrap) {
         return Object.keys(obj).map(name => createCall(type, name, obj[name], wrap));
     }
 
     function liveError(type, names) {
         return `Attempt to add ${type} ${names} to ${logId} after the first action was dispatched`;
+    }
+
+    // Check that the required calculations have already been registered
+    function checkRequirements(type, obj) {
+        Object.keys(obj).forEach(name => {
+            if (obj[name].requires) {
+                obj[name].requires.forEach(requirement => {
+                    if (!calculationNames[requirement]) {
+                        throw `${type} '${name}' requires the calculation '${requirement}' in ${logId}`;
+                    }
+                });
+            }
+        });
+    }
+
+    function registerCalculationNames(obj) {
+        Object.keys(obj).forEach(name => {
+            calculations[name] = true;
+        });
     }
 
     return {
@@ -252,7 +275,9 @@ function createFluxlet(id) {
             if (live) {
                 throw liveError('calculations', Object.keys(namedCalculations));
             }
+            checkRequirements("Calculation", namedCalculations);
             calculations.push(...createCalls("calculation", namedCalculations, logCall));
+            registerCalculationNames(namedCalculations);
             return this;
         },
 
@@ -264,6 +289,7 @@ function createFluxlet(id) {
         //     f.sideEffects({ renderEverything, makeHttpRequest })
         //
         sideEffects(namedSideEffects) {
+            checkRequirements("Side effect", namedSideEffects);
             sideEffects.push(...createCalls("sideEffect", namedSideEffects, logCall));
             return this;
         },
