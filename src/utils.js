@@ -78,6 +78,6 @@ export function clickAction(action, ...args) {
  */
 export function deferred(fn) {
     return (...args) => {
-        window.setTimeout(fn(...args), 0);
+        window.setTimeout(() => fn(...args), 0);
     };
 }
