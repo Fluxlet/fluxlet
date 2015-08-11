@@ -1,8 +1,12 @@
 import fluxlet from '../src/fluxlet';
 
-function actionSpy(fn) {
-    return jasmine.createSpy('action', fn).and.callThrough();
+function spyCreator(type) {
+    return fn => jasmine.createSpy(type, fn).and.callThrough();
 }
+
+const actionSpy = spyCreator('action');
+const calculationSpy = spyCreator('calculation');
+const whenSpy = spyCreator('when');
 
 describe('Fluxlet', () => {
 
@@ -20,38 +24,42 @@ describe('Fluxlet', () => {
 
 describe('Fluxlet', () => {
 
-    let f;
+    let given;
+
+    const dispatchers = () => given.debug.dispatchers();
+    const calculations = () => given.debug.calculations();
+    const when = dispatchers;
+    const state = () => given.debug.state();
 
     beforeEach(() => {
-        f = fluxlet();
+        given = fluxlet();
     });
 
     describe('state', () => {
 
         it('returns fluxlet', () => {
-            expect(f.state({})).toBe(f);
+            expect(given.state({})).toBe(given);
         });
 
         it('sets the initial state', () => {
             const s = {};
-            f.state(s);
-            expect(f.debug.state()).toBe(s);
+            given.state(s);
+            expect(state()).toBe(s);
         });
     });
 
     describe('actions', () => {
 
-
         it('are wrapped with a dispatcher', () => {
-            f.actions({ testA: () => s => s });
-            expect(f.debug.dispatchers().testA).toBeDefined();
+            given.actions({ testA: () => s => s });
+            expect(dispatchers().testA).toBeDefined();
         });
 
         it('are dispatched', () => {
             const testB = actionSpy(() => s => s);
-            f.actions({ testB });
+            given.actions({ testB });
 
-            f.debug.dispatchers().testB();
+            when().testB();
 
             expect(testB).toHaveBeenCalled();
         });
@@ -64,22 +72,22 @@ describe('Fluxlet', () => {
                     then: actionSpy(() => s => s)
                 };
 
-                f.actions({ testC });
+                given.actions({ testC });
 
-                f.debug.dispatchers().testC();
+                when().testC();
 
                 expect(testC.then).toHaveBeenCalled();
             });
 
             it('are not dispatched when false', () => {
                 const testD = {
-                    when: s => false,
+                    when: as => false,
                     then: actionSpy(() => s => s)
                 };
 
-                f.actions({ testD });
+                given.actions({ testD });
 
-                f.debug.dispatchers().testD();
+                when().testD();
 
                 expect(testD.then).not.toHaveBeenCalled();
             });
@@ -87,9 +95,63 @@ describe('Fluxlet', () => {
 
         it('must return a function', () => {
             const testE = actionSpy(() => { foo: "bar" });
-            f.actions({ testE });
+            given.actions({ testE });
 
-            expect(() => { f.debug.dispatchers().testE() }).toThrowError();
+            expect(() => { when().testE() }).toThrowError();
         });
+    });
+
+    describe('calculation', () => {
+
+        beforeEach(() => {
+            given.actions({ anyAction: () => s => s });
+        });
+
+        it('can be a plain function', () => {
+            given.calculations({ testCalcA: s => s });
+            expect(calculations().length).toBe(1);
+        });
+
+        it('is called within any action dispatch', () => {
+            const testCalcB = calculationSpy(s => s);
+
+            given.calculations({ testCalcB });
+
+            when().anyAction();
+
+            expect(testCalcB).toHaveBeenCalled();
+        });
+
+        describe('as conditional', () => {
+
+            it('is called when true', () => {
+                const testCalcC = {
+                    when: whenSpy(s => true),
+                    then: calculationSpy(() => s => s)
+                };
+
+                given.calculations({ testCalcC });
+
+                when().anyAction();
+
+                expect(testCalcC.when).toHaveBeenCalled();
+                expect(testCalcC.then).toHaveBeenCalled();
+            });
+
+            it('is not called when false', () => {
+                const testCalcD = {
+                    when: whenSpy(s => false),
+                    then: calculationSpy(() => s => s)
+                };
+
+                given.calculations({ testCalcD });
+
+                when().anyAction();
+
+                expect(testCalcD.when).toHaveBeenCalled();
+                expect(testCalcD.then).not.toHaveBeenCalled();
+            });
+        });
+
     });
 });
