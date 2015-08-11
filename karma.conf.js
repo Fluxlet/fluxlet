@@ -23,7 +23,11 @@ module.exports = function (config) {
         ],
 
         // list of files to exclude
-        exclude: [],
+        exclude: [
+            'src/fluxlet-def.js',
+            'examples/**/index.js',
+            'examples/**/setup.js'
+        ],
 
 
         // preprocess matching files before serving them to the browser

@@ -3,22 +3,23 @@ import { given, when, then } from "../../src/testlet";
 
 import { setWords } from "./words";
 
-describe("setWords action", () => {
+describe("example 'words':", () => {
 
-    beforeEach(() => {
-        given
-            .fluxlet()
-            .state(defaultState)
-            .actions({ setWords });
-    });
+    describe("setWords action", () => {
 
-    it("sets words to given arg", () => {
-        given.state();
+        beforeEach(() => {
+            given
+                .fluxlet()
+                .state(defaultState)
+                .actions({setWords});
+        });
 
-        when().setWords("one two three");
+        it("sets words to given arg", () => {
+            when().setWords("one two three");
 
-        then(state => {
-            expect(state.words).toBe("one two three");
+            then(state => {
+                expect(state.words).toBe("one two three");
+            });
         });
     });
 });

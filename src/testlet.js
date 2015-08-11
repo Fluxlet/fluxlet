@@ -22,16 +22,25 @@
 //
 
 import fluxlet from "./fluxlet";
-import { deepFreeze } from "./utils";
-
-import { extend } from "jquery";
-const deepExtend = extend.bind(undefined, true);
+import { deepFreeze, deepExtend, createSpy } from "./testlet-utils";
 
 // Holds the fluxlet created by *given.fluxlet()*
 var instance;
 
 // Holds the state gathered from a special side effect registered by *given.fluxlet()*
 var gathered;
+
+// All actions, calculations and side effects are wrapped in spies, and this provides access to those for use in
+// expect calls, eg:
+//
+//     expect(spy.action.someAction).toHaveBeenCalled();
+//     expect(spy.action.someCalculation.then).toHaveBeenCalled();
+//
+export const spy = Object.freeze({
+    action: {},
+    calculation: {},
+    sideEffect: {}
+});
 
 // ## Given
 
@@ -70,19 +79,19 @@ export var given = {
 
     // Register actions for testing
     actions(namedActions) {
-        instance.actions(namedActions);
+        instance.actions(spyOn("action", namedActions));
         return this;
     },
 
     // Register calculations for testing
     calculations(namedCalculations) {
-        instance.calculations(namedCalculations);
+        instance.calculations(spyOn("calculation", namedCalculations));
         return this;
     },
 
     // Register side effects for testing
     sideEffects(namedSideEffects) {
-        instance.sideEffects(namedSideEffects);
+        instance.sideEffects(spyOn("sideEffect", namedSideEffects));
         return this;
     },
 
@@ -134,8 +143,30 @@ export function thenAfter(when, then) {
     });
 }
 
-export function noop(){
-    return function(state) {
-        return state;
-    };
+// A no-operation mock action
+export const mockAction = () => state => state;
+
+// Wrap all named functions or when & then of fluxlet conditionals in a spy and register the spy
+export function spyOn(type, namedConditionals) {
+    return Object.keys(namedConditionals).reduce((ret, name) => {
+        spy[type][name] = ret[name] = fluxletSpy(type, name, namedConditionals[name]);
+        return ret;
+    }, {});
+}
+
+// Create the spy for an individual action, calculation or side-effect
+function fluxletSpy(type, name, fnOrCond) {
+
+    function spy(fn, suffix) {
+        return fn ? createSpy(suffix ? `${type} ${name}.${suffix}` : `${type} ${name}`, fn) : undefined;
+    }
+
+    if (typeof fnOrCond === "object") {
+        return extend({}, fnOrCond, {
+            when: spy(fnOrCond.when, 'when'),
+            then: spy(fnOrCond.then, 'then')
+        });
+    } else {
+        return spy(fnOrCond);
+    }
 }
