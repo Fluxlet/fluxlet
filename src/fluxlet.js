@@ -40,11 +40,14 @@ function createFluxlet(id) {
     // The list of state calculation functions
     const calculations = [];
 
-    // All registered calculation names, for requirements checking (value is always true)
-    const calculationNames = {};
-
     // The list of side effect functions
     const sideEffects = [];
+
+    // All registered calculation and sideEffect names, for requirements checking (value is always true)
+    const registered = {
+        calculation: {},
+        sideEffect: {}
+    };
 
     // Log category settings
     const logging = {
@@ -174,11 +177,15 @@ function createFluxlet(id) {
         log("register", type, name);
 
         if (fnOrCond && fnOrCond.then && fnOrCond.then.apply) {
-            return conditionalCall(fnOrCond.when || (() => true), wrap(fnOrCond.then, type, name));
+            if (fnOrCond.when && fnOrCond.when.apply) {
+                return conditionalCall(fnOrCond.when, wrap(fnOrCond.then, type, name));
+            } else {
+                return wrap(fnOrCond.then, type, name);
+            }
         } else if (fnOrCond && fnOrCond.apply) {
             return wrap(fnOrCond, type, name);
         } else {
-            throw new TypeError(`${type} '${name}' must be a function or an object containing a when & then function`);
+            throw new TypeError(`${type} '${name}' must be a function, or an object containing a 'then' & optional 'when' function`);
         }
     }
 
@@ -203,22 +210,26 @@ function createFluxlet(id) {
         return `Attempt to add ${type} ${names} to ${logId} after the first action was dispatched`;
     }
 
-    // Check that the required calculations have already been registered
-    function checkRequirements(type, obj) {
+    // Check that the required calculations or sideEffects have already been registered
+    function checkRequirements(type, obj, requiresProp, registerType) {
         Object.keys(obj).forEach(name => {
-            if (obj[name].requires) {
-                obj[name].requires.forEach(requirement => {
-                    if (!calculationNames[requirement]) {
-                        throw `${type} '${name}' requires the calculation '${requirement}' in ${logId}`;
+            let requires = obj[name][requiresProp];
+            if (requires) {
+                if (!Array.isArray(requires)) {
+                    requires = [requires];
+                }
+                requires.forEach(requirement => {
+                    if (!registered[registerType][requirement]) {
+                        throw `${type} '${name}' requires the ${registerType} '${requirement}' in ${logId}`;
                     }
                 });
             }
         });
     }
 
-    function registerCalculationNames(obj) {
+    function registerNames(obj, registerType) {
         Object.keys(obj).forEach(name => {
-            calculations[name] = true;
+            registered[registerType][name] = true;
         });
     }
 
@@ -275,9 +286,14 @@ function createFluxlet(id) {
             if (live) {
                 throw liveError('calculations', Object.keys(namedCalculations));
             }
-            checkRequirements("Calculation", namedCalculations);
+            // Check the required calculations of these calculations have already been registered
+            checkRequirements("Calculation", namedCalculations, "requiresCalculation", "calculation");
+
+            // Create the calculation functions and add them to the list
             calculations.push(...createCalls("calculation", namedCalculations, logCall));
-            registerCalculationNames(namedCalculations);
+
+            // Register these calculations
+            registerNames(namedCalculations, "calculation");
             return this;
         },
 
@@ -289,8 +305,17 @@ function createFluxlet(id) {
         //     f.sideEffects({ renderEverything, makeHttpRequest })
         //
         sideEffects(namedSideEffects) {
-            checkRequirements("Side effect", namedSideEffects);
+            // Check the required calculations of these side-effects have already been registered
+            checkRequirements("Side effect", namedSideEffects, "requiresCalculation", "calculation");
+
+            // Check the required side-effects of these side-effects have already been registered
+            checkRequirements("Side effect", namedSideEffects, "requiresSideEffects", "sideEffect");
+
+            // Create the side-effect functions and add them to the list
             sideEffects.push(...createCalls("sideEffect", namedSideEffects, logCall));
+
+            // Register these side-effects
+            registerNames(namedSideEffects, "sideEffect");
             return this;
         },
 
