@@ -54,6 +54,7 @@ function createFluxlet(id) {
         register: false,
         dispatch: false,
         call: false,
+        args: false,
         state: false,
         timing: false
     };
@@ -70,8 +71,8 @@ function createFluxlet(id) {
 
     function log(category, type, name, args) {
         if (logging[category]) {
-            if (args && args.length) {
-                cons.log(`${logId} ${category} ${type}:${name}`, ...args);
+            if ((logging.args || category === "state") && args && args.length) {
+                cons.log(`${logId} ${category} ${type}:${name}`, args);
             } else {
                 cons.log(`${logId} ${category} ${type}:${name}`);
             }
