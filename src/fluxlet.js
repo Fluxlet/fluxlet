@@ -51,11 +51,11 @@ function createFluxlet(id) {
 
     // Log category settings
     const logging = {
-        register: true,
-        dispatch: true,
-        call: true,
+        register: false,
+        dispatch: false,
+        call: false,
         state: false,
-        timing: true
+        timing: false
     };
 
     // Handy string for use in log and error messages
@@ -63,14 +63,17 @@ function createFluxlet(id) {
 
     // Set to true on the first action dispatch,
     // after which certain aspects of the fluxlet may not be modified
-    var live = false;
+    let live = false;
+
+    // Local reference to console, which can be overriden for testing
+    let cons = console;
 
     function log(category, type, name, args) {
         if (logging[category]) {
             if (args && args.length) {
-                console.log(`${logId} ${category} ${type}:${name}`, ...args);
+                cons.log(`${logId} ${category} ${type}:${name}`, ...args);
             } else {
-                console.log(`${logId} ${category} ${type}:${name}`);
+                cons.log(`${logId} ${category} ${type}:${name}`);
             }
         }
     }
@@ -79,15 +82,15 @@ function createFluxlet(id) {
     function start(category, type, name, args) {
         log(category, type, name, args);
 
-        if (logging[category] && logging.timing && console.time) {
-            console.time(`${logId}:${category}:${type}:${name}`);
+        if (logging[category] && logging.timing && cons.time) {
+            cons.time(`${logId}:${category}:${type}:${name}`);
         }
     }
 
     // Stop a named timer and report the elapsed time
     function end(category, type, name) {
-        if (logging[category] && logging.timing && console.timeEnd) {
-            console.timeEnd(`${logId}:${category}:${type}:${name}`);
+        if (logging[category] && logging.timing && cons.timeEnd) {
+            cons.timeEnd(`${logId}:${category}:${type}:${name}`);
         }
     }
 
@@ -243,7 +246,7 @@ function createFluxlet(id) {
             if (lockedState) {
                 throw ("The state validator should be set before the initial state of the fluxlet is set");
             }
-            log("register", "validator", validator);
+            log("register", "validator", "", [validator]);
             stateValidator = validator;
             return this;
         },
@@ -356,7 +359,10 @@ function createFluxlet(id) {
             dispatching: () => dispatching,
             dispatchers: () => dispatchers,
             calculations: () => calculations,
-            sideEffects: () => sideEffects
+            sideEffects: () => sideEffects,
+            setConsole: (altCons) => {
+                cons = altCons;
+            }
         }
     };
 }

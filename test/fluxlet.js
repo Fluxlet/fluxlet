@@ -505,4 +505,194 @@ describe('Fluxlet', () => {
             });
         });
     });
+
+    describe('logging', () => {
+        let consoleSpy;
+        let timingHandle = "time not called";
+
+        beforeEach(() => {
+            consoleSpy = {
+                log: spyCreator('console.log')(() => {}),
+                time: spyCreator('console.time')((h) => { timingHandle = h; }),
+                timeEnd: spyCreator('console.timeEnd')(() => {})
+            };
+
+            given.debug.setConsole(consoleSpy);
+        });
+
+        describe('register', () => {
+            beforeEach(() => {
+                given.logging({ register: true });
+            });
+
+            it('logs registration of a validator', () => {
+                const v = () => {};
+                given.validator(v);
+                expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) register validator:', v);
+            });
+
+            it('logs registration of an action', () => {
+                given.actions({ anAction: () => s => s });
+                expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) register action:anAction');
+            });
+
+            it('logs registration of a calculation', () => {
+                given.calculations({ aCalc: s => s });
+                expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) register calculation:aCalc');
+            });
+
+            it('logs registration of a side effect', () => {
+                given.sideEffects({ aSideEffect: () => {} });
+                expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) register sideEffect:aSideEffect');
+            });
+        });
+
+        describe('dispatch', () => {
+            beforeEach(() => {
+                given.logging({ dispatch: true });
+                given.actions({ anAction: (a, b) => s => s });
+            });
+
+            it('logs the action name and args on dispatch', () => {
+                when().anAction("A", "B");
+
+                expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) dispatch action:anAction', 'A', 'B');
+                expect(consoleSpy.time).not.toHaveBeenCalled();
+                expect(consoleSpy.timeEnd).not.toHaveBeenCalled();
+            });
+
+            describe('with timing', () => {
+                it('logs the timing of the action', () => {
+                    given.logging({ timing: true });
+
+                    when().anAction("A", "B");
+
+                    expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) dispatch action:anAction', 'A', 'B');
+                    expect(consoleSpy.time).toHaveBeenCalledWith(timingHandle);
+                    expect(consoleSpy.timeEnd).toHaveBeenCalledWith(timingHandle);
+                });
+            });
+        });
+
+        describe('call', () => {
+            const s0 = { stage: 0 };
+            const s1 = { stage: 1 };
+
+            beforeEach(() => {
+                given.logging({ call: true });
+                given.state(s0);
+                given.actions({ doSomething: () => s => s1 });
+            });
+
+            it('logs the calculation name with transient state when called', () => {
+                given.calculations({ aCalc: s => s });
+
+                when().doSomething();
+
+                expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) call calculation:aCalc', s1);
+                expect(consoleSpy.time).not.toHaveBeenCalled();
+                expect(consoleSpy.timeEnd).not.toHaveBeenCalled();
+            });
+
+            it('logs the side effect name with transient state when called', () => {
+                given.sideEffects({ aSideEffect: () => {} });
+
+                when().doSomething();
+
+                expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) call sideEffect:aSideEffect', s1);
+                expect(consoleSpy.time).not.toHaveBeenCalled();
+                expect(consoleSpy.timeEnd).not.toHaveBeenCalled();
+            });
+
+            describe('with timing', () => {
+                beforeEach(() => {
+                    given.logging({ timing: true });
+                });
+
+                it('logs the timing of the calculation', () => {
+                    given.calculations({ aCalc: s => s });
+
+                    when().doSomething();
+
+                    expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) call calculation:aCalc', s1);
+                    expect(consoleSpy.time).toHaveBeenCalledWith(timingHandle);
+                    expect(consoleSpy.timeEnd).toHaveBeenCalledWith(timingHandle);
+                });
+
+                it('logs the timing of the side effect', () => {
+                    given.sideEffects({ aSideEffect: () => {} });
+
+                    when().doSomething();
+
+                    expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) call sideEffect:aSideEffect', s1);
+                    expect(consoleSpy.time).toHaveBeenCalledWith(timingHandle);
+                    expect(consoleSpy.timeEnd).toHaveBeenCalledWith(timingHandle);
+                });
+            });
+        });
+
+        describe('state', () => {
+            const s0 = { stage: 0 };
+            const s1 = { stage: 1 };
+            const s2 = { stage: 2 };
+
+            beforeEach(() => {
+                given.logging({ state: true });
+                given.state(s0);
+                given.actions({ doSomething: () => s => s1 });
+                given.actions({ doNothing: () => s => s });
+            });
+
+            it('logs the starting state before dispatch', () => {
+                given.calculations({ calcSomething: s => s2 });
+
+                when().doSomething();
+
+                expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) state before:doSomething', s0);
+            });
+
+            it('logs the new state before side effects when the state has changed', () => {
+                given.calculations({ calcSomething: s => s2 });
+
+                when().doSomething();
+
+                expect(consoleSpy.log.calls.count()).toBe(2);
+                expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) state after:doSomething', s2);
+            });
+
+            it('does not log the after state if it has not changed', () => {
+                when().doNothing();
+
+                expect(consoleSpy.log.calls.count()).toBe(1);
+            });
+        });
+    });
+
+    describe('debug', () => {
+
+        describe('live', () => {
+            it('becomes true after the first dispatch', () => {
+                given.actions({ anyAction: () => s => s });
+
+                expect(given.debug.live()).toBe(false);
+
+                when().anyAction();
+
+                expect(given.debug.live()).toBe(true);
+            });
+        });
+
+        describe('dispatching', () => {
+            it('returns the name of the currently dispatching action', () => {
+                given.actions({
+                    anAction: () => s => {
+                        expect(given.debug.dispatching()).toBe("anAction");
+                        return s;
+                    }
+                });
+
+                when().anAction();
+            });
+        });
+    });
 });
