@@ -1,12 +1,5 @@
 var wallabify = require('wallabify');
-var wallabyPostprocessor = wallabify({
-    // browserify options, such as
-    // insertGlobals: false
-  }
-  // you may also pass an initializer function to chain other
-  // browserify options, such as transformers
-  // , b => b.exclude('mkdirp').transform(require('babelify'))
-);
+var wallabyPostprocessor = wallabify({});
 
 module.exports = () => {
   return {
