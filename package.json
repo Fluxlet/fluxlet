@@ -1,33 +1,37 @@
 {
   "name": "fluxlet",
   "version": "0.0.1",
-  "repository": {
-    "type": "git",
-    "url": "https://bitbucket.org/Adaptavist/fluxlet.git"
+  "description": "A small Flux-like dataflow library",
+  "main": "src/fluxlet.js",
+  "directories": {
+    "doc": "doc",
+    "test": "test"
   },
+  "dependencies": {},
   "devDependencies": {
     "babel": "^5.8.23",
-    "babel-core": "^5.2.15",
-    "babel-loader": "^5.0.0",
-    "babelify": "^6.0.2",
-    "browserify": "^10.0.0",
+    "babelify": "^6.3.0",
+    "browserify": "^11.0.1",
     "groc": "^0.8.0",
-    "grunt": "^0.4.5",
-    "grunt-cli": "^0.1.13",
-    "grunt-webpack": "^1.0.8",
-    "jasmine-core": "^2.3.0",
-    "jquery": "^2.1.4",
-    "karma": "^0.12.31",
-    "karma-browserify": "^4.1.2",
-    "karma-chrome-launcher": "^0.1.8",
-    "karma-cli": "0.0.4",
-    "karma-firefox-launcher": "^0.1.4",
-    "karma-jasmine": "^0.3.5",
-    "karma-phantomjs-launcher": "^0.1.4",
-    "load-grunt-tasks": "^3.1.0",
-    "underscore": "^1.8.3",
-    "wallabify": "0.0.9",
-    "webpack": "^1.8.11",
-    "webpack-dev-server": "^1.8.2"
-  }
+    "jasmine-core": "^2.3.4",
+    "karma": "^0.13.9",
+    "karma-browserify": "^4.3.0",
+    "karma-chrome-launcher": "^0.2.0",
+    "karma-firefox-launcher": "^0.1.6",
+    "karma-cli": "^0.1.0",
+    "karma-jasmine": "^0.3.6",
+    "wallabify": "^0.0.9"
+  },
+  "scripts": {
+    "test": "karma start --single-run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@stash.adaptavist.com:7999/crap/fluxlet.git"
+  },
+  "keywords": [
+    "fluxlet"
+  ],
+  "author": "Mark Gibson <mgibson@adaptavist.com>",
+  "license": "MIT"
 }

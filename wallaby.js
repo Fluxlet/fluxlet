@@ -4,13 +4,10 @@ var wallabyPostprocessor = wallabify({});
 module.exports = () => {
   return {
     files: [
-      {pattern: 'src/fluxlet.js', load: false}
-    //   'src/utils.js',
-    //   'src/testlet-utils.js',
-    //   'src/testlet.js'
+      {pattern: 'src/*.js', load: false}
     ],
     tests: [
-      {pattern: 'test/fluxlet.js', load: false}
+      {pattern: 'test/*.js', load: false}
     ],
     preprocessors: {
       '**/*.js': file => require('babel')

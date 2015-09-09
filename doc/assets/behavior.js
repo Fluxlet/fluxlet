@@ -6,121 +6,6 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
 
   tableOfContents = [
     {
-      "type": "folder",
-      "data": {
-        "path": "examples",
-        "title": "examples"
-      },
-      "depth": 1,
-      "children": [
-        {
-          "type": "folder",
-          "data": {
-            "path": "examples/words",
-            "title": "words"
-          },
-          "depth": 2,
-          "children": [
-            {
-              "type": "file",
-              "data": {
-                "language": {
-                  "nameMatchers": [".js"],
-                  "pygmentsLexer": "javascript",
-                  "multiLineComment": ["/*", "*", "*/"],
-                  "singleLineComment": ["//"],
-                  "ignorePrefix": "}",
-                  "foldPrefix": "^",
-                  "name": "JavaScript"
-                },
-                "sourcePath": "/Users/mgibson/adaptavist/fluxlet/examples/words/index.js",
-                "projectPath": "examples/words/index.js",
-                "targetPath": "examples/words/index",
-                "pageTitle": "examples/words/index",
-                "title": "index"
-              },
-              "depth": 3
-            }, {
-              "type": "file",
-              "data": {
-                "language": {
-                  "nameMatchers": [".js"],
-                  "pygmentsLexer": "javascript",
-                  "multiLineComment": ["/*", "*", "*/"],
-                  "singleLineComment": ["//"],
-                  "ignorePrefix": "}",
-                  "foldPrefix": "^",
-                  "name": "JavaScript"
-                },
-                "sourcePath": "/Users/mgibson/adaptavist/fluxlet/examples/words/setup.js",
-                "projectPath": "examples/words/setup.js",
-                "targetPath": "examples/words/setup",
-                "pageTitle": "examples/words/setup",
-                "title": "setup"
-              },
-              "depth": 3
-            }, {
-              "type": "file",
-              "data": {
-                "language": {
-                  "nameMatchers": [".js"],
-                  "pygmentsLexer": "javascript",
-                  "multiLineComment": ["/*", "*", "*/"],
-                  "singleLineComment": ["//"],
-                  "ignorePrefix": "}",
-                  "foldPrefix": "^",
-                  "name": "JavaScript"
-                },
-                "sourcePath": "/Users/mgibson/adaptavist/fluxlet/examples/words/state.js",
-                "projectPath": "examples/words/state.js",
-                "targetPath": "examples/words/state",
-                "pageTitle": "examples/words/state",
-                "title": "state"
-              },
-              "depth": 3
-            }, {
-              "type": "file",
-              "data": {
-                "language": {
-                  "nameMatchers": [".js"],
-                  "pygmentsLexer": "javascript",
-                  "multiLineComment": ["/*", "*", "*/"],
-                  "singleLineComment": ["//"],
-                  "ignorePrefix": "}",
-                  "foldPrefix": "^",
-                  "name": "JavaScript"
-                },
-                "sourcePath": "/Users/mgibson/adaptavist/fluxlet/examples/words/test.js",
-                "projectPath": "examples/words/test.js",
-                "targetPath": "examples/words/test",
-                "pageTitle": "examples/words/test",
-                "title": "test"
-              },
-              "depth": 3
-            }, {
-              "type": "file",
-              "data": {
-                "language": {
-                  "nameMatchers": [".js"],
-                  "pygmentsLexer": "javascript",
-                  "multiLineComment": ["/*", "*", "*/"],
-                  "singleLineComment": ["//"],
-                  "ignorePrefix": "}",
-                  "foldPrefix": "^",
-                  "name": "JavaScript"
-                },
-                "sourcePath": "/Users/mgibson/adaptavist/fluxlet/examples/words/words.js",
-                "projectPath": "examples/words/words.js",
-                "targetPath": "examples/words/words",
-                "pageTitle": "examples/words/words",
-                "title": "words"
-              },
-              "depth": 3
-            }
-          ]
-        }
-      ]
-    }, {
       "type": "file",
       "data": {
         "language": {
@@ -132,51 +17,24 @@ f.event={add:function(a,c,d,e,g){var h,i,j,k,l,m,n,o,p,q,r,s;if(!(a.nodeType===3
           "foldPrefix": "^",
           "name": "JavaScript"
         },
-        "sourcePath": "/Users/mgibson/adaptavist/fluxlet/src/fluxlet.js",
+        "sourcePath": "/Users/mgibson/fluxlet/fluxlet/src/fluxlet.js",
         "projectPath": "src/fluxlet.js",
         "targetPath": "fluxlet",
         "pageTitle": "fluxlet",
-        "title": "fluxlet"
-      },
-      "depth": 1
-    }, {
-      "type": "file",
-      "data": {
-        "language": {
-          "nameMatchers": [".js"],
-          "pygmentsLexer": "javascript",
-          "multiLineComment": ["/*", "*", "*/"],
-          "singleLineComment": ["//"],
-          "ignorePrefix": "}",
-          "foldPrefix": "^",
-          "name": "JavaScript"
+        "firstHeader": {
+          "type": "heading",
+          "data": {
+            "level": 1,
+            "title": "Fluxlet",
+            "slug": "fluxlet",
+            "isFileHeader": true
+          },
+          "depth": 1
         },
-        "sourcePath": "/Users/mgibson/adaptavist/fluxlet/src/testlet.js",
-        "projectPath": "src/testlet.js",
-        "targetPath": "testlet",
-        "pageTitle": "testlet",
-        "title": "testlet"
+        "title": "Fluxlet"
       },
-      "depth": 1
-    }, {
-      "type": "file",
-      "data": {
-        "language": {
-          "nameMatchers": [".js"],
-          "pygmentsLexer": "javascript",
-          "multiLineComment": ["/*", "*", "*/"],
-          "singleLineComment": ["//"],
-          "ignorePrefix": "}",
-          "foldPrefix": "^",
-          "name": "JavaScript"
-        },
-        "sourcePath": "/Users/mgibson/adaptavist/fluxlet/src/utils.js",
-        "projectPath": "src/utils.js",
-        "targetPath": "utils",
-        "pageTitle": "utils",
-        "title": "utils"
-      },
-      "depth": 1
+      "depth": 1,
+      "outline": []
     }
   ];
 

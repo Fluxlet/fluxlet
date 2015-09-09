@@ -16,28 +16,18 @@ module.exports = function (config) {
         // list of files / patterns to load in the browser
         files: [
             'src/*.js',
-            'test/*.js',
-            'node_modules/underscore/underscore.js',
-            'node_modules/jquery/dist/jquery.js',
-            'examples/**/*.js'
+            'test/*.js'
         ],
 
         // list of files to exclude
-        exclude: [
-            'src/fluxlet-def.js',
-            'examples/**/index.js',
-            'examples/**/setup.js'
-        ],
+        exclude: [],
 
 
         // preprocess matching files before serving them to the browser
         // available preprocessors: https://npmjs.org/browse/keyword/karma-preprocessor
         preprocessors: {
             'src/*.js': ['browserify'],
-            'test/*.js': ['browserify'],
-            'node_modules/underscore/underscore.js': ['browserify'],
-            'node_modules/jquery/dist/jquery.js': ['browserify'],
-            'examples/**/*.js': ['browserify']
+            'test/*.js': ['browserify']
         },
 
         browserify: {
@@ -71,9 +61,8 @@ module.exports = function (config) {
         // start these browsers
         // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
         browsers: [
-            //'PhantomJS',
-            'Chrome' //,
-            //'Firefox'
+            'Chrome',
+            'Firefox'
         ],
 
 
