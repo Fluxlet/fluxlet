@@ -137,7 +137,21 @@ describe('Fluxlet', () => {
 
             when().testValidatorAction();
 
+            expect(v.calls.count()).toBe(2);
             expect(v).toHaveBeenCalledWith(s2);
+        });
+
+        it('is not called after an action if state has not changed', () => {
+            const s1 = { stage: 1 };
+            const v = validatorSpy(s => {});
+
+            given.validator(v);
+            given.state(s1);
+            given.actions({ testValidatorAction: () => s => s });
+
+            when().testValidatorAction();
+
+            expect(v.calls.count()).toBe(1);
         });
 
         it('is called to validate state returned from a calculation', () => {
@@ -153,7 +167,23 @@ describe('Fluxlet', () => {
 
             when().testValidatorAction();
 
+            expect(v.calls.count()).toBe(3);
             expect(v).toHaveBeenCalledWith(s3);
+        });
+
+        it('is not called after a calculation if the calculation has not changed the state', () => {
+            const s1 = { stage: 1 };
+            const s2 = { stage: 2 };
+            const v = validatorSpy(s => {});
+
+            given.validator(v);
+            given.state(s1);
+            given.actions({ testValidatorAction: () => s => s2 });
+            given.calculations({ testValidatorCalc: s => s });
+
+            when().testValidatorAction();
+
+            expect(v.calls.count()).toBe(2);
         });
 
         it('should throw an error on invalid state', () => {

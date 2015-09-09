@@ -124,31 +124,33 @@ function createFluxlet(id) {
                 }
 
                 // Pass the state the to the function returned from the action
-                let newState = stateManipulator(startState);
+                let transientState = stateManipulator(startState);
 
                 // Validate the state returned by the action
-                stateValidator && newState !== startState && stateValidator(newState);
+                stateValidator && transientState !== startState && stateValidator(transientState);
 
                 // Chain calculation calls
                 calculations.forEach(calculation => {
+                    const priorState = transientState;
+
                     // passing the state return from one into the next,
                     // the starting state prior to the action is also given.
-                    newState = calculation(newState, startState);
+                    transientState = calculation(priorState, startState);
 
                     // Validate the state returned by the calculation
-                    stateValidator && newState !== startState && stateValidator(newState);
+                    stateValidator && transientState !== priorState && stateValidator(transientState);
                 });
 
                 // Store state and determine if a change has occurred
-                if (newState !== startState) {
-                    lockedState = newState;
+                if (transientState !== startState) {
+                    lockedState = transientState;
 
-                    log("state", "after", name, [newState]);
+                    log("state", "after", name, [lockedState]);
 
                     // Call side-effects only if state has changed
                     sideEffects.forEach(sideEffect => {
                         // passing the new state, original state, and all action dispatchers
-                        sideEffect(newState, startState, dispatchers);
+                        sideEffect(lockedState, startState, dispatchers);
                     });
                 }
             } finally {
