@@ -6,14 +6,16 @@
 const fluxlets = {};
 
 // Create or retrieve a fluxlet
-export default function(id) {
+// opts can be used to pass in some configuration options, which at present is
+// only used for testing of the fluxlet url params
+export default function(id, opts = {}) {
 
     // Return an existing fluxlet by id if it exists
     if (id && fluxlets[id]) {
         return fluxlets[id];
     }
 
-    const instance = createFluxlet(id);
+    const instance = createFluxlet(id, opts);
 
     // Anonymous fluxlets are not stored
     if (id) {
@@ -23,7 +25,20 @@ export default function(id) {
     return instance;
 }
 
-function createFluxlet(id) {
+// Default logging settings
+export const defaultLogging = {
+    register: false,
+    dispatch: false,
+    call: false,
+    args: false,
+    state: false,
+    timing: false
+};
+
+function createFluxlet(id, {params = [location.search, location.hash]}) {
+
+    // Read the fluxlet prefixed url params
+    const urlParams = readUrlParams(id, params);
 
     // A function that validates states as they are passed around
     let stateValidator = undefined;
@@ -50,14 +65,7 @@ function createFluxlet(id) {
     };
 
     // Log category settings
-    const logging = {
-        register: false,
-        dispatch: false,
-        call: false,
-        args: false,
-        state: false,
-        timing: false
-    };
+    const logging = extend({}, defaultLogging, getLoggingFromUrlParams(urlParams, 'log'));
 
     // Handy string for use in log and error messages
     const logId = `fluxlet:${id||'(anon)'}`;
@@ -339,7 +347,7 @@ function createFluxlet(id) {
         //     f.logging({ call: false })
         //
         logging(categories) {
-            Object.keys(categories).forEach(name => { logging[name] = categories[name] });
+            extend(logging, categories);
             return this;
         },
 
@@ -361,9 +369,65 @@ function createFluxlet(id) {
             dispatchers: () => dispatchers,
             calculations: () => calculations,
             sideEffects: () => sideEffects,
+            logging: () => logging,
+            urlParams: () => urlParams,
             setConsole: (altCons) => {
                 cons = altCons;
             }
         }
     };
+}
+
+// Read 'fluxlet.' prefixed params from the given strings
+// 'fluxlet.<param>=<value>' will apply to any fluxlet
+// 'fluxlet.<id>.<param>=<value>' will apply only to the specific fluxlet by id
+// the fluxlet specific value will override the general value
+function readUrlParams(id, strs) {
+    const params = {};
+
+    function readParams(prefix) {
+        strs.forEach(str => {
+            const re = new RegExp(`\\b${prefix}\\.([^&;=#?.]+)=([^&;=#?]+)`, 'g');
+            let m;
+            while (m = re.exec(str)) {
+                params[m[1]] = m[2];
+            }
+        });
+    }
+
+    readParams('fluxlet');
+    id && readParams('fluxlet\\.' + id.replace(/[\\^$*+?.()|[\]{}]/g, '\\$&'));
+
+    return params;
+}
+
+// Extract logging categories from a fluxlet url param
+function getLoggingFromUrlParams(urlParams, name) {
+    const categories = {};
+    if (urlParams[name]) {
+        if (urlParams[name] === "all") {
+            Object.keys(defaultLogging).forEach(key => {
+                categories[key] = true;
+            });
+        } else {
+            urlParams[name].split(",").forEach(key => {
+                if (key) {
+                    categories[key] = true;
+                }
+            });
+        }
+    }
+    return categories;
+}
+
+// Extend target object with the properties from all the given source objects
+export function extend(target, ...sources) {
+    sources.forEach(source => {
+        if (source && typeof source === 'object') {
+            Object.keys(source).forEach(key => {
+                target[key] = source[key];
+            });
+        }
+    });
+    return target;
 }

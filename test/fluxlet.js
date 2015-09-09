@@ -1,4 +1,4 @@
-import fluxlet from '../src/fluxlet';
+import fluxlet, { extend } from '../src/fluxlet';
 
 function spyCreator(type) {
     return fn => jasmine.createSpy(type, fn).and.callThrough();
@@ -9,6 +9,17 @@ const calculationSpy = spyCreator('calculation');
 const sideEffectSpy = spyCreator('side effect');
 const validatorSpy = spyCreator('validator');
 const whenSpy = spyCreator('when');
+
+function allLogging(val, ...overrides) {
+    return extend({
+        register: val,
+        dispatch: val,
+        call: val,
+        args: val,
+        state: val,
+        timing: val
+    }, ...overrides);
+}
 
 describe('Fluxlet', () => {
 
@@ -35,6 +46,77 @@ describe('Fluxlet', () => {
 
         expect(n).not.toEqual(f);
         expect(f.debug.id()).toBeUndefined();
+    });
+
+    describe('urlParams', () => {
+        it('extracts fluxlet prefixed params from the URL', () => {
+            const opts = {
+                params: ["fluxlet.foo=ignored","fluxlet.x.foo=x-foo","fluxlet.foo=all-foo&fluxlet.y.bar=y-only&fluxlet.foobar=all-foobar"]
+            };
+
+            const fx = fluxlet("x", opts);
+            const fy = fluxlet("y", opts);
+
+            expect(fx.debug.urlParams()).toEqual({
+                foo: "x-foo",
+                foobar: "all-foobar"
+            });
+            expect(fy.debug.urlParams()).toEqual({
+                foo: "all-foo",
+                bar: "y-only",
+                foobar: "all-foobar"
+            });
+        });
+    });
+
+    describe('logging configuration via URL', () => {
+        it('can set all levels for all fluxlets', () => {
+            const opts = {
+                params: ["fluxlet.log=all"]
+            };
+
+            const fa = fluxlet("a", opts);
+            const fb = fluxlet("b", opts);
+
+            expect(fa.debug.logging()).toEqual(allLogging(true));
+            expect(fb.debug.logging()).toEqual(allLogging(true));
+        });
+
+        it('can set all levels for a specific fluxlet by id', () => {
+            const opts = {
+                params: ["fluxlet.c.log=all"]
+            };
+
+            const fc = fluxlet("c", opts);
+            const fd = fluxlet("d", opts);
+
+            expect(fc.debug.logging()).toEqual(allLogging(true));
+            expect(fd.debug.logging()).toEqual(allLogging(false));
+        });
+
+        it('can set specific levels for all fluxlets', () => {
+            const opts = {
+                params: ["fluxlet.log=dispatch,call"]
+            };
+
+            const fe = fluxlet("e", opts);
+            const ff = fluxlet("f", opts);
+
+            expect(fe.debug.logging()).toEqual(allLogging(false, { dispatch: true, call: true }));
+            expect(ff.debug.logging()).toEqual(allLogging(false, { dispatch: true, call: true }));
+        });
+
+        it('can set specific levels for a fluxlet by id', () => {
+            const opts = {
+                params: ["fluxlet.g.log=dispatch,call"]
+            };
+
+            const fg = fluxlet("g", opts);
+            const fh = fluxlet("h", opts);
+
+            expect(fg.debug.logging()).toEqual(allLogging(false, { dispatch: true, call: true }));
+            expect(fh.debug.logging()).toEqual(allLogging(false));
+        });
     });
 });
 
