@@ -21,6 +21,9 @@
   "scripts": {
     "test": "karma start --single-run"
   },
+  "browserify": {
+      "transform": [ "babelify" ]
+  },
   "repository": {
     "type": "git",
     "url": "ssh://git@stash.adaptavist.com:7999/crap/fluxlet.git"
