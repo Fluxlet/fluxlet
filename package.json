@@ -3,10 +3,6 @@
   "version": "0.0.1",
   "description": "A small Flux-like dataflow library",
   "main": "src/fluxlet.js",
-  "directories": {
-    "doc": "doc",
-    "test": "test"
-  },
   "dependencies": {},
   "devDependencies": {
     "babel": "^5.8.23",
