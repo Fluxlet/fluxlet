@@ -2,27 +2,33 @@
   "name": "fluxlet",
   "version": "0.0.1",
   "description": "A small Flux-like dataflow library",
-  "main": "src/fluxlet.js",
+  "main": "src/fluxlet",
+  "registry": "jspm",
   "dependencies": {},
   "devDependencies": {
-    "babel": "^5.8.23",
-    "babelify": "^6.3.0",
-    "browserify": "^11.0.1",
     "groc": "^0.8.0",
     "jasmine-core": "^2.3.4",
+    "jspm": "^0.16.2",
     "karma": "^0.13.9",
-    "karma-browserify": "^4.3.0",
     "karma-chrome-launcher": "^0.2.0",
-    "karma-firefox-launcher": "^0.1.6",
     "karma-cli": "^0.1.0",
+    "karma-firefox-launcher": "^0.1.6",
     "karma-jasmine": "^0.3.6",
+    "karma-jspm": "^2.0.1",
     "wallabify": "^0.0.9"
   },
   "scripts": {
     "test": "karma start --single-run"
   },
-  "browserify": {
-      "transform": [ "babelify" ]
+  "jspm": {
+    "format": "es6",
+    "directories": {},
+    "dependencies": {},
+    "devDependencies": {
+      "babel": "npm:babel-core@^5.8.24",
+      "babel-runtime": "npm:babel-runtime@^5.8.24",
+      "core-js": "npm:core-js@^1.1.4"
+    }
   },
   "repository": {
     "type": "git",

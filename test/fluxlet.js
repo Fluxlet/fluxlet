@@ -1,4 +1,4 @@
-import fluxlet, { extend } from '../src/fluxlet';
+import fluxlet, { extend } from 'src/fluxlet';
 
 function spyCreator(type) {
     return fn => jasmine.createSpy(type, fn).and.callThrough();
