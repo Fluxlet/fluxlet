@@ -313,6 +313,14 @@ describe('Fluxlet', () => {
             }).toThrow("Attempt to add actions testLateAction to fluxlet:(anon) after the first action was dispatched");
         });
 
+        it('can not override existing actions with the same name', () => {
+          given.actions({ existingAction: () => s => s });
+
+          expect(() => {
+              given.actions({ existingAction: () => s => s });
+          }).toThrowError("Attempt to add an existing action 'existingAction' to fluxlet:(anon)");
+        });
+
         describe('conditional', () => {
 
             it('without a then function will fail to register', () => {
@@ -409,6 +417,14 @@ describe('Fluxlet', () => {
             });
 
             expect(calculations().length).toBe(2);
+        });
+
+        it('can not override existing calculations with the same name', () => {
+          given.calculations({ existingCalc: s => s });
+
+          expect(() => {
+              given.calculations({ existingCalc: s => s });
+          }).toThrowError("Attempt to add an existing calculation 'existingCalc' to fluxlet:(anon)");
         });
 
         describe('as conditional', () => {
@@ -529,6 +545,14 @@ describe('Fluxlet', () => {
             });
 
             expect(sideEffects().length).toBe(2);
+        });
+
+        it('can not override existing side effects with the same name', () => {
+          given.sideEffects({ existingSideEffect: () => {} });
+
+          expect(() => {
+              given.sideEffects({ existingSideEffect: () => {} });
+          }).toThrowError("Attempt to add an existing sideEffect 'existingSideEffect' to fluxlet:(anon)");
         });
 
         describe('as conditional', () => {

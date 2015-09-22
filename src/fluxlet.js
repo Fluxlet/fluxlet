@@ -58,8 +58,11 @@ function createFluxlet(id, {params = [location.search, location.hash]}) {
     // The list of side effect functions
     const sideEffects = [];
 
-    // All registered calculation and sideEffect names, for requirements checking (value is always true)
+    // All registered actions, calculation and sideEffect names, for duplicates
+    // and requirements checking (value is always true for calculations and
+    // sideEffects)
     const registered = {
+        action: dispatchers,
         calculation: {},
         sideEffect: {}
     };
@@ -224,6 +227,15 @@ function createFluxlet(id, {params = [location.search, location.hash]}) {
         return `Attempt to add ${type} ${names} to ${logId} after the first action was dispatched`;
     }
 
+    // Check that an action, calculation, or sideEffect hasn't already been registered
+    function checkForDuplicates(type, obj) {
+      Object.keys(obj).forEach(name => {
+        if (registered[type][name]) {
+          throw new Error(`Attempt to add an existing ${type} '${name}' to ${logId}`);
+        }
+      });
+    }
+
     // Check that the required calculations or sideEffects have already been registered
     function checkRequirements(type, obj, requiresProp, registerType) {
         Object.keys(obj).forEach(name => {
@@ -278,12 +290,18 @@ function createFluxlet(id, {params = [location.search, location.hash]}) {
         // Add named actions to the fluxlet. An action takes some operational params,
         // and returns a fn that takes the whole fluxlet state and returns a new state.
         //
+        // (...args) -> (state) -> state
+        //
         //     f.actions({ setName, setDateOfBirth })
         //
         actions(namedActions) {
             if (live) {
                 throw liveError('actions', Object.keys(namedActions));
             }
+
+            // Check that we aren't registering actions with the same names
+            checkForDuplicates("action", namedActions);
+
             Object.keys(namedActions).forEach(name => {
                 dispatchers[name] = createCall("action", name, namedActions[name], createDispatcher);
             });
@@ -294,12 +312,18 @@ function createFluxlet(id, {params = [location.search, location.hash]}) {
         // from the action, and then return value is passed into the next calculation, and so on.
         // They are also passed the original state prior to the action (as the 2nd arg).
         //
+        // (state, original_state) -> state
+        //
         //     f.calculations({ makeNameUppercase, calculateAge })
         //
         calculations(namedCalculations) {
             if (live) {
                 throw liveError('calculations', Object.keys(namedCalculations));
             }
+
+            // Check that we aren't registering calculations with the same names
+            checkForDuplicates("calculation", namedCalculations);
+
             // Check the required calculations of these calculations have already been registered
             checkRequirements("Calculation", namedCalculations, "requiresCalculations", "calculation");
 
@@ -316,9 +340,14 @@ function createFluxlet(id, {params = [location.search, location.hash]}) {
         // of action dispatchers. A side-effect must not change state, or directly dispatch an action
         // from this same fluxlet (it may bind them to async events or timeouts though).
         //
+        // (state, original_state, dispatchers) -> void
+        //
         //     f.sideEffects({ renderEverything, makeHttpRequest })
         //
         sideEffects(namedSideEffects) {
+            // Check that we aren't registering side effects with the same names
+            checkForDuplicates("sideEffect", namedSideEffects);
+
             // Check the required calculations of these side-effects have already been registered
             checkRequirements("Side effect", namedSideEffects, "requiresCalculations", "calculation");
 
@@ -334,6 +363,8 @@ function createFluxlet(id, {params = [location.search, location.hash]}) {
         },
 
         // Call a initialisation function with the map of action dispatchers.
+        //
+        // (dispatchers) -> void
         //
         //     f.init(({ setName }) => bindChangeEventToAction(setName))
         //
