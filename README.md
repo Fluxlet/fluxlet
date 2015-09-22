@@ -10,6 +10,12 @@ Docs can be generated using groc:
 
 And then opened directly from the filesystem in a browser.
 
+## Development
+
+    $ npm install
+
+Will install all development dependencies including jspm packages.
+
 ## Tests
 
 Test are run using karma:

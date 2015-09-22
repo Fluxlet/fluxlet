@@ -1,28 +1,56 @@
-var wallabify = require('wallabify');
-var wallabyPostprocessor = wallabify({});
+module.exports = function () {
 
-module.exports = () => {
+  // Preprocessor to transpile imports/exports and possibly other ES6 elements
+  var babelPreprocessor = file => require('babel')
+                                    .transform(file.content, {sourceMap: true});
+
   return {
     files: [
+      // system.js and configuration
+      {pattern: 'jspm_packages/system.js', instrument: false},
+      {pattern: 'config.js', instrument: false},
+
+      // source files (`load: false` as the files will be loaded by system.js loader)
       {pattern: 'src/*.js', load: false}
     ],
     tests: [
+      // test files (`load: false` as we will load tests manually)
       {pattern: 'test/*.js', load: false}
     ],
-    preprocessors: {
-      '**/*.js': file => require('babel')
-                            .transform(file.content, {sourceMap: true}),
-    },
-    postprocessor: wallabyPostprocessor,
 
-    bootstrap: function () {
-      // required to trigger tests loading
-      window.__moduleBundler.loadTests();
+    preprocessors: {
+      'test/*.js': babelPreprocessor,
+      'src/*.js': babelPreprocessor
+    },
+
+    // telling wallaby to serve jspm_packages project folder
+    // as is from wallaby web server
+    middleware: (app, express) => {
+      app.use('/jspm_packages',
+              express.static(
+                 require('path').join(__dirname, 'jspm_packages')));
+    },
+
+    bootstrap: function (wallaby) {
+      // Preventing wallaby from starting the test run
+      wallaby.delayStart();
+
+      var promises = [];
+      for (var i = 0, len = wallaby.tests.length; i < len; i++) {
+        // loading wallaby tests
+        promises.push(System['import'](wallaby.tests[i].replace(/\.js$/, '')));
+      }
+
+      // starting wallaby test run when everything required is loaded
+      Promise.all(promises).then(function () {
+        wallaby.start();
+      });
     },
 
     env: {
-        type: 'browser'
+      type: 'browser'
     },
+
     debug: true
   };
 };

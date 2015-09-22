@@ -1,5 +1,3 @@
-/* */ 
-"format esm";
 // Karma configuration
 // Generated on Thu Apr 30 2015 21:15:29 GMT+0100 (BST)
 
