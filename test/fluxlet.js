@@ -391,7 +391,7 @@ describe('Fluxlet', () => {
             expect(() => {
                 given.calculations({
                     testCalcRequires: {
-                        requiresCalculation: "missingCalc",
+                        requiresCalculations: "missingCalc",
                         then: s => s
                     }
                 });
@@ -403,7 +403,7 @@ describe('Fluxlet', () => {
 
             given.calculations({
                 testCalcRequires: {
-                    requiresCalculation: "existingCalc",
+                    requiresCalculations: "existingCalc",
                     then: s => s
                 }
             });
@@ -486,7 +486,7 @@ describe('Fluxlet', () => {
             expect(() => {
                 given.sideEffects({
                     testSideEffectRequires: {
-                        requiresCalculation: "missingCalc",
+                        requiresCalculations: "missingCalc",
                         then: () => {}
                     }
                 });
@@ -498,7 +498,7 @@ describe('Fluxlet', () => {
 
             given.sideEffects({
                 testSideEffectRequires: {
-                    requiresCalculation: "existingCalc",
+                    requiresCalculations: "existingCalc",
                     then: () => {}
                 }
             });

@@ -301,7 +301,7 @@ function createFluxlet(id, {params = [location.search, location.hash]}) {
                 throw liveError('calculations', Object.keys(namedCalculations));
             }
             // Check the required calculations of these calculations have already been registered
-            checkRequirements("Calculation", namedCalculations, "requiresCalculation", "calculation");
+            checkRequirements("Calculation", namedCalculations, "requiresCalculations", "calculation");
 
             // Create the calculation functions and add them to the list
             calculations.push(...createCalls("calculation", namedCalculations, logCall));
@@ -320,7 +320,7 @@ function createFluxlet(id, {params = [location.search, location.hash]}) {
         //
         sideEffects(namedSideEffects) {
             // Check the required calculations of these side-effects have already been registered
-            checkRequirements("Side effect", namedSideEffects, "requiresCalculation", "calculation");
+            checkRequirements("Side effect", namedSideEffects, "requiresCalculations", "calculation");
 
             // Check the required side-effects of these side-effects have already been registered
             checkRequirements("Side effect", namedSideEffects, "requiresSideEffects", "sideEffect");
