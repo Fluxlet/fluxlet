@@ -118,7 +118,7 @@ function createFluxlet(id, {params = [location.search, location.hash]}) {
 
             if (dispatching) {
                 // This dispatch will fail if called directly from within another dispatch
-                throw (`Attempt to dispatch action '${name}' within action '${dispatching}' in ${logId}`);
+                throw new Error(`Attempt to dispatch action '${name}' within action '${dispatching}' in ${logId}`);
             }
 
             // Lock the dispatcher for the current action
@@ -224,7 +224,7 @@ function createFluxlet(id, {params = [location.search, location.hash]}) {
     }
 
     function liveError(type, names) {
-        return `Attempt to add ${type} ${names} to ${logId} after the first action was dispatched`;
+        return new Error(`Attempt to add ${type} ${names} to ${logId} after the first action was dispatched`);
     }
 
     // Check that an action, calculation, or sideEffect hasn't already been registered
@@ -246,7 +246,7 @@ function createFluxlet(id, {params = [location.search, location.hash]}) {
                 }
                 requires.forEach(requirement => {
                     if (!registered[registerType][requirement]) {
-                        throw `${type} '${name}' requires the ${registerType} '${requirement}' in ${logId}`;
+                        throw new Error(`${type} '${name}' requires the ${registerType} '${requirement}' in ${logId}`);
                     }
                 });
             }
@@ -265,7 +265,7 @@ function createFluxlet(id, {params = [location.search, location.hash]}) {
         // the initial state, and after each action and calculation if a new state has been returned.
         validator(validator) {
             if (lockedState) {
-                throw ("The state validator should be set before the initial state of the fluxlet is set");
+                throw new Error("The state validator should be set before the initial state of the fluxlet is set");
             }
             log("register", "validator", "", [validator]);
             stateValidator = validator;
@@ -275,7 +275,7 @@ function createFluxlet(id, {params = [location.search, location.hash]}) {
         // Set (or modify) the initial state of the fluxlet
         state(state) {
             if (live) {
-                throw (`Attempt to set state of ${logId} after the first action was dispatched`);
+                throw new Error(`Attempt to set state of ${logId} after the first action was dispatched`);
             }
             log("create", "state", state);
             if (typeof state === "function") {

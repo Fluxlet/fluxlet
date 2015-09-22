@@ -176,7 +176,7 @@ describe('Fluxlet', () => {
 
             expect(() => {
                 given.state({});
-            }).toThrow("Attempt to set state of fluxlet:(anon) after the first action was dispatched");
+            }).toThrowError("Attempt to set state of fluxlet:(anon) after the first action was dispatched");
         });
     });
 
@@ -195,7 +195,7 @@ describe('Fluxlet', () => {
 
             expect(() => {
                 given.validator(() => {});
-            }).toThrow("The state validator should be set before the initial state of the fluxlet is set");
+            }).toThrowError("The state validator should be set before the initial state of the fluxlet is set");
         });
 
         it('is called to validate initial state', () => {
@@ -301,7 +301,7 @@ describe('Fluxlet', () => {
 
             expect(() => {
                 when().testNest1();
-            }).toThrow("Attempt to dispatch action 'testNest2' within action 'testNest1' in fluxlet:(anon)");
+            }).toThrowError("Attempt to dispatch action 'testNest2' within action 'testNest1' in fluxlet:(anon)");
         });
 
         it('can not be registered after the first dispatch', () => {
@@ -310,7 +310,7 @@ describe('Fluxlet', () => {
 
             expect(() => {
                 given.actions({ testLateAction: () => s => s });
-            }).toThrow("Attempt to add actions testLateAction to fluxlet:(anon) after the first action was dispatched");
+            }).toThrowError("Attempt to add actions testLateAction to fluxlet:(anon) after the first action was dispatched");
         });
 
         it('can not override existing actions with the same name', () => {
@@ -392,7 +392,7 @@ describe('Fluxlet', () => {
 
             expect(() => {
                 given.calculations({ testLateCalc: s => s });
-            }).toThrow("Attempt to add calculations testLateCalc to fluxlet:(anon) after the first action was dispatched");
+            }).toThrowError("Attempt to add calculations testLateCalc to fluxlet:(anon) after the first action was dispatched");
         });
 
         it('will fail to register if a required calculation has not been registered', () => {
@@ -403,7 +403,7 @@ describe('Fluxlet', () => {
                         then: s => s
                     }
                 });
-            }).toThrow("Calculation 'testCalcRequires' requires the calculation 'missingCalc' in fluxlet:(anon)");
+            }).toThrowError("Calculation 'testCalcRequires' requires the calculation 'missingCalc' in fluxlet:(anon)");
         });
 
         it('will register if a required calculation has been registered', () => {
@@ -506,7 +506,7 @@ describe('Fluxlet', () => {
                         then: () => {}
                     }
                 });
-            }).toThrow("Side effect 'testSideEffectRequires' requires the calculation 'missingCalc' in fluxlet:(anon)");
+            }).toThrowError("Side effect 'testSideEffectRequires' requires the calculation 'missingCalc' in fluxlet:(anon)");
         });
 
         it('will register if a required calculation has been registered', () => {
@@ -531,7 +531,7 @@ describe('Fluxlet', () => {
                         then: () => {}
                     }
                 });
-            }).toThrow("Side effect 'testSideEffectRequires' requires the sideEffect 'missingSideEffect' in fluxlet:(anon)");
+            }).toThrowError("Side effect 'testSideEffectRequires' requires the sideEffect 'missingSideEffect' in fluxlet:(anon)");
         });
 
         it('will register if a required side effect has been registered', () => {
