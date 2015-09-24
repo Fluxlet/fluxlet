@@ -2,8 +2,7 @@
   "name": "fluxlet",
   "version": "0.0.1",
   "description": "An application state management micro-framework",
-  "main": "src/fluxlet",
-  "registry": "jspm",
+  "main": "lib/fluxlet",
   "dependencies": {},
   "devDependencies": {
     "babel": "^5.8.23",
@@ -18,10 +17,12 @@
     "karma-jspm": "^2.0.1"
   },
   "scripts": {
-    "postinstall": "jspm install",
+    "prepublish": "babel -d lib src",
+    "pretest": "jspm install",
     "test": "karma start --single-run"
   },
   "jspm": {
+    "registry": "jspm",
     "format": "es6",
     "dependencies": {},
     "devDependencies": {
@@ -30,10 +31,7 @@
       "core-js": "npm:core-js@^1.1.4"
     }
   },
-  "repository": {
-    "type": "git",
-    "url": "ssh://git@stash.adaptavist.com:7999/crap/fluxlet.git"
-  },
+  "repository": "fluxlet/fluxlet",
   "keywords": [
     "fluxlet"
   ],

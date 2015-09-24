@@ -159,13 +159,16 @@ And then opened directly from the filesystem in a browser.
 
     $ npm install
 
-Will install all development dependencies including jspm packages.
-
 
 ## Tests
 
-Test are run using karma:
+Test are run using karma and jspm:
 
+    $ npm test
+
+or
+
+    $ jspm install
     $ karma start
 
 There is also a config for Wallaby if you have it installed in your IDE.
