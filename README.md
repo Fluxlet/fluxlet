@@ -106,20 +106,23 @@ DOM to determine whether it needs to update it or not.
 ## Example
 
     import fluxlet from "fluxlet"
-    import update from "fluxlet-immutable"
+    import { update } from "fluxlet-immutable/update"
 
-    fluxlet('hello-world')
-      .state({
-        name: '',
-        response: ''
-      })
-      .actions({ setName })
-      .calculations({ formulateResponse })
-      .sideEffects({ reply })
-      .init(bindGlobalEvents)
+    export default function() {
+      fluxlet('hello-world')
+        .state({
+          name: '',
+          response: ''
+        })
+        .actions({ setName })
+        .calculations({ formulateResponse })
+        .sideEffects({ deliverResponse })
+        .init(bindGlobalEvents)
+    }
 
     function bindGlobalEvents(dispatch) {
-      $("input").on("change", (event) => dispatch.setName(event.target.value))
+      document.getElementById("id")
+        .addEventListener("input", (event) => dispatch.setName(event.target.value))
     }
 
     // Actions
@@ -129,7 +132,9 @@ DOM to determine whether it needs to update it or not.
     const formulateResponse = update('response', (x, state) => `Hello ${state.name}`)
 
     // Side-Effects
-    const reply = (state) => console.log(state.response)
+    const deliverResponse = (state) => {
+      document.getElementById("out").textContent = state.response
+    }
 
 This example uses the *update* function from the
 [fluxlet-immutable](../fluxlet-immutable) library, which is in a separate
