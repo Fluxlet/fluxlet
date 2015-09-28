@@ -5,9 +5,13 @@
 // Internal map of named fluxlets
 const fluxlets = {}
 
+// ## Factory
+//
 // Create or retrieve a fluxlet
+//
 // opts can be used to pass in some configuration options, which at present is
 // only used for testing of the fluxlet url params
+//
 export default function(id, opts = {}) {
 
     // Return an existing fluxlet by id if it exists
@@ -35,6 +39,8 @@ export const defaultLogging = {
     timing: false
 }
 
+// ## Internal constructor
+//
 function createFluxlet(id, {params = [location.search, location.hash]}) {
 
     // Read the fluxlet prefixed url params
@@ -299,9 +305,19 @@ function createFluxlet(id, {params = [location.search, location.hash]}) {
         // Add named actions to the fluxlet. An action takes some operational params,
         // and returns a fn that takes the whole fluxlet state and returns a new state.
         //
-        // (...args) -> (state) -> state
-        //
         //     f.actions({ setName, setDateOfBirth })
+        //
+        // Each named action can be either a function with the signature:
+        //
+        //     (...args) -> (state) -> state
+        //
+        // Or an object with an optional _condition_ function 'when', 'then' is the action which is only
+        // performed if the condition returns true.
+        //
+        //     {
+        //       when?: (state, ...args) -> boolean,
+        //       then: (...args) -> (state) -> state
+        //     }
         //
         actions(namedActions) {
             if (live) {
@@ -321,9 +337,23 @@ function createFluxlet(id, {params = [location.search, location.hash]}) {
         // from the action, and then return value is passed into the next calculation, and so on.
         // They are also passed the original state prior to the action (as the 2nd arg).
         //
-        // (state, original_state) -> state
-        //
         //     f.calculations({ makeNameUppercase, calculateAge })
+        //
+        // Each named calculation can be either a function with the signature:
+        //
+        //     (state, original_state) -> state
+        //
+        // Or an object with an optional _condition_ function 'when', 'then' is the calculation which is only
+        // performed if the condition returns true.
+        //
+        //     {
+        //       requiresCalculations?: string | string[],
+        //       when?: (state, original_state) -> boolean,
+        //       then: (state, original_state) -> state
+        //     }
+        //
+        // The 'requiresCalculations' is an optional set of calculation names on which this calculation depends,
+        // if any of the calculations have not already been registered an error will be thrown.
         //
         calculations(namedCalculations) {
             if (live) {
@@ -349,9 +379,24 @@ function createFluxlet(id, {params = [location.search, location.hash]}) {
         // of action dispatchers. A side-effect must not change state, or directly dispatch an action
         // from this same fluxlet (it may bind them to async events or timeouts though).
         //
-        // (state, original_state, dispatchers) -> void
-        //
         //     f.sideEffects({ renderEverything, makeHttpRequest })
+        //
+        // Each named side-effect can be either a function with the signature:
+        //
+        //     (state, original_state, dispatchers) -> void
+        //
+        // Or an object with an optional _condition_ function 'when', 'then' is the side-effect which is only
+        // performed if the condition returns true.
+        //
+        //     {
+        //       requiresCalculations?: string | string[],
+        //       requiresSideEffects?: string | string[],
+        //       when?: (state, original_state) -> boolean,
+        //       then: (state, original_state, dispatchers) -> void
+        //     }
+        //
+        // The 'requiresCalculations' and 'requiresSideEffects' are optional sets of calculation and side-effect names
+        // on which this side-effect depends, if any of them have not already been registered an error will be thrown.
         //
         sideEffects(namedSideEffects) {
             // Check that we aren't registering side effects with the same names
@@ -373,16 +418,19 @@ function createFluxlet(id, {params = [location.search, location.hash]}) {
 
         // Call a initialisation function with the map of action dispatchers.
         //
-        // (dispatchers) -> void
-        //
         //     f.init(({ setName }) => bindChangeEventToAction(setName))
+        //
+        // The param is a function with the signature:
+        //
+        //     (dispatchers) -> void
         //
         init(fn) {
             fn(dispatchers)
             return this
         },
 
-        // Set logging levels
+        // Set logging levels, taking an object of logging level categories as keys to a boolean value indicating
+        // whether that type of logging should be enabled.
         //
         //     f.logging({ call: false })
         //
