@@ -356,6 +356,23 @@ describe('Fluxlet', () => {
                 expect(testD.when).toHaveBeenCalled()
                 expect(testD.then).not.toHaveBeenCalled()
             })
+
+            it('when is passed state and args', () => {
+                const testE = {
+                    when: whenSpy((s, a, b) => true),
+                    then: actionSpy((a, b) => s => s)
+                }
+                const initialState = { one: 1 }
+
+                given.state(initialState)
+                given.actions({ testE })
+
+                when().testE(10, 'B')
+
+                expect(testE.when).toHaveBeenCalledWith(initialState, 10, 'B')
+                expect(testE.then).toHaveBeenCalledWith(10, 'B')
+            })
+
         })
 
         it('must return a function', () => {

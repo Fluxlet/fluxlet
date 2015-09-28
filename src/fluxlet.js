@@ -107,12 +107,17 @@ function createFluxlet(id, {params = [location.search, location.hash]}) {
     }
 
     // Create a dispatcher function for an action
-    function createDispatcher(action, type, name) {
+    function createDispatcher(action, type, name, condition) {
         // This is the dispatcher function, created for the given action.
         // It args are passed through to the action function later.
         return (...args) => {
             // The fluxlet become 'live' on the first action dispatch
             live = true
+
+            // Test the condition (if given) before dispatching the action
+            if (condition && !condition(lockedState, ...args)) {
+                return
+            }
 
             start("dispatch", type, name, args)
 
@@ -195,7 +200,11 @@ function createFluxlet(id, {params = [location.search, location.hash]}) {
 
         if (fnOrCond && fnOrCond.then && fnOrCond.then.apply) {
             if (fnOrCond.when && fnOrCond.when.apply) {
-                return conditionalCall(fnOrCond.when, wrap(fnOrCond.then, type, name))
+                if (type === "action") {
+                    return wrap(fnOrCond.then, type, name, fnOrCond.when)
+                } else {
+                    return conditionalCall(fnOrCond.when, wrap(fnOrCond.then, type, name))
+                }
             } else {
                 return wrap(fnOrCond.then, type, name)
             }
