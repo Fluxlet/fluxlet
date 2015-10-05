@@ -24,6 +24,10 @@
   "jspm": {
     "registry": "jspm",
     "format": "es6",
+    "main": "fluxlet",
+    "directories": {
+      "lib": "src"
+    },
     "dependencies": {},
     "devDependencies": {
       "babel": "npm:babel-core@^5.8.24",
