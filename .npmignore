@@ -4,3 +4,5 @@ config.js
 fluxlet-data-flow.png
 karma.conf.js
 wallaby.js
+jspm_packages
+.idea
