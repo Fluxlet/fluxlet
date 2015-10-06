@@ -137,11 +137,11 @@ DOM to determine whether it needs to update it or not.
     }
 
 This example uses the *update* function from the
-[fluxlet-immutable](../fluxlet-immutable) library, which is in a separate
+[fluxlet-immutable](/fluxlet/fluxlet-immutable) library, which is in a separate
 package as you may want to use whatever immutable library you prefer.
 
 For a richer example see the
-[fluxlet-example-todomvc](../fluxlet-example-todomvc).
+[fluxlet-example-todomvc](/fluxlet/fluxlet-example-todomvc).
 
 Oh and btw, all of the Fluxlet code, additional libraries and examples are
 written and take advantage of ECMAScript 2015 syntax, but only use API features
