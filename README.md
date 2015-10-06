@@ -1,3 +1,9 @@
+[![Build Status](https://travis-ci.org/Fluxlet/fluxlet.svg?branch=master)](https://travis-ci.org/Fluxlet/fluxlet)
+[![npm version](https://img.shields.io/npm/v/fluxlet.svg)](https://www.npmjs.com/package/fluxlet)
+[![Dependency Status](https://david-dm.org/fluxlet/fluxlet.svg)](https://david-dm.org/fluxlet/fluxlet)
+[![devDependency Status](https://david-dm.org/fluxlet/fluxlet/dev-status.svg)](https://david-dm.org/fluxlet/fluxlet#info=devDependencies)
+[![License](https://img.shields.io/github/license/fluxlet/fluxlet.svg)](LICENSE)
+
 # Fluxlet
 
 Fluxlet is a micro-framework for managing state within your application.
