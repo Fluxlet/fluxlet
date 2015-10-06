@@ -162,6 +162,32 @@ Docs can be generated using groc:
 And then opened directly from the filesystem in a browser.
 
 
+## Installing
+
+### Using [jspm](http://jspm.io)
+
+    $ jspm install fluxlet=github:fluxlet/fluxlet@master
+
+### Using [npm](https://www.npmjs.com/)
+
+    $ npm install fluxlet
+
+### Using [bower](http://bower.io/)
+
+    $ bower install fluxlet/fluxlet
+
+You'll find the ES6 src in _bower_components/fluxlet/src/fluxlet.js_,
+which will need to be transpiled using your favourite tools.
+
+
+## Testing Fluxlets
+
+To make testing of fluxlets easier a test library,
+[testlet](https://github.com/fluxlet/fluxlet-testlet), provides a fluent API
+for setting up fluxlets, dispatching actions, and checking state using a
+given/when/then style.
+
+
 ## Development
 
     $ npm install
