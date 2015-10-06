@@ -105,43 +105,45 @@ DOM to determine whether it needs to update it or not.
 
 ## Example
 
-    import fluxlet from "fluxlet"
-    import { update } from "fluxlet-immutable/update"
+```javascript
+import fluxlet from "fluxlet"
+import { update } from "fluxlet-immutable/update"
 
-    export default function() {
-      fluxlet('hello-world')
-        .state({
-          name: '',
-          response: ''
-        })
-        .actions({ setName })
-        .calculations({ formulateResponse })
-        .sideEffects({ deliverResponse })
-        .init(bindGlobalEvents)
-    }
+export default function() {
+  fluxlet('hello-world')
+    .state({
+      name: '',
+      response: ''
+    })
+    .actions({ setName })
+    .calculations({ formulateResponse })
+    .sideEffects({ deliverResponse })
+    .init(bindGlobalEvents)
+}
 
-    function bindGlobalEvents(dispatch) {
-      document.getElementById("id")
-        .addEventListener("input", (event) => dispatch.setName(event.target.value))
-    }
+function bindGlobalEvents(dispatch) {
+  document.getElementById("id")
+    .addEventListener("input", (event) => dispatch.setName(event.target.value))
+}
 
-    // Actions
-    const setName = (name) => update('name', name)
+// Actions
+const setName = (name) => update('name', name)
 
-    // Calculations
-    const formulateResponse = update('response', (x, state) => `Hello ${state.name}`)
+// Calculations
+const formulateResponse = update('response', (x, state) => `Hello ${state.name}`)
 
-    // Side-Effects
-    const deliverResponse = (state) => {
-      document.getElementById("out").textContent = state.response
-    }
+// Side-Effects
+const deliverResponse = (state) => {
+  document.getElementById("out").textContent = state.response
+}
+```
 
 This example uses the *update* function from the
-[fluxlet-immutable](/fluxlet/fluxlet-immutable) library, which is in a separate
+[fluxlet-immutable](https://github.com/fluxlet/fluxlet-immutable) library, which is in a separate
 package as you may want to use whatever immutable library you prefer.
 
 For a richer example see the
-[fluxlet-example-todomvc](/fluxlet/fluxlet-example-todomvc).
+[fluxlet-example-todomvc](https://github.com/fluxlet/fluxlet-example-todomvc).
 
 Oh and btw, all of the Fluxlet code, additional libraries and examples are
 written and take advantage of ECMAScript 2015 syntax, but only use API features
