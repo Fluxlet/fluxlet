@@ -8,8 +8,7 @@ env:
     secure: jyv/BZp4ah5+h+JI4HkmQjqtTCAtUVMyI7l4YOkTDzSQIrUDd3SEKgy8TzzZBpKjJOH2ngfCrEJbpk74/5Q6UB7kA1VhfOniVZKW3/JzrY1bFUshxQEaUVb49/73tLFAYiGQCjX0zUzOhWYm0rr/Mwv14Ssyab96ZRlnWIgghOHGaByjs6TSYtLPqIcq2G9xHh9FYHLe+p6DCx6M5yFWanXADWbVblAJtZUbOPP5oMs05zSYxQq4tn2XBnG78amqhIJcXTuoyschEoJf6puRBFV1B/rfidD1Lh9FQ/EtZ3Q9VvRXcSinrjVsk/g7qvoer6AAdO/HJtyYubsVfrivTWnsYhXo4qCd0zA/nDcuZnnJTp4K/S+9rxCzi8B8JjTnSDvM7CeiWdtqkVd2H5N+d90wW2krp8iYAAx8+zpt9/0Ti8fyKT3RPerHTXhx3T8mNqPvAhfe/B/QRPL7ZDN85ZGjPA0yMZ5RXxNSAU+BL5PqO5uVw5yPQuF5aPfb2UIP7DoDS/BX5SNV2Oa/I1O9ji6pIGLOsVTJ9liQFcLfFCUsyeNBz0OzWOcS6oBf/dAWISNC89vkvb/ThHmJ8zCanQ5E+WaAAPZykkHzW5UGTNRNXJcPZgc8jNAZILPp6CAEG9+tThqOG8yh9UKWPlu41nRofob9UBzRJYZVGs6Q310=
 
 before_install:
-- npm install -g npm jspm
-- npm --version
+- npm install -g jspm
 - jspm --version
 - jspm config registries.github.auth $JSPM_GITHUB_AUTH_TOKEN
 - export DISPLAY=:99.0
