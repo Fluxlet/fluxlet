@@ -6,3 +6,5 @@
 node_modules
 jspm_packages
 lib
+doc
+config.js
