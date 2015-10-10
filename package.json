@@ -6,7 +6,6 @@
   "dependencies": {},
   "devDependencies": {
     "babel": "^5.8.23",
-    "groc": "^0.8.0",
     "jasmine-core": "^2.3.4",
     "jspm": "^0.16.7",
     "karma": "^0.13.10",
@@ -18,7 +17,7 @@
   },
   "scripts": {
     "prepublish": "babel -d lib src",
-    "pretest": "jspm install",
+    "pretest": "jspm install -y",
     "test": "karma start --single-run"
   },
   "jspm": {
