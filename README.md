@@ -2,6 +2,7 @@
 [![npm version](https://img.shields.io/npm/v/fluxlet.svg)](https://www.npmjs.com/package/fluxlet)
 [![Dependency Status](https://david-dm.org/fluxlet/fluxlet.svg)](https://david-dm.org/fluxlet/fluxlet)
 [![devDependency Status](https://david-dm.org/fluxlet/fluxlet/dev-status.svg)](https://david-dm.org/fluxlet/fluxlet#info=devDependencies)
+[![Code Climate](https://codeclimate.com/github/Fluxlet/fluxlet/badges/gpa.svg)](https://codeclimate.com/github/Fluxlet/fluxlet)
 [![License](https://img.shields.io/github/license/fluxlet/fluxlet.svg)](LICENSE)
 
 # Fluxlet
