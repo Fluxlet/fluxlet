@@ -22,8 +22,8 @@
   },
   "jspm": {
     "registry": "jspm",
-    "format": "es6",
     "main": "fluxlet",
+    "format": "es6",
     "directories": {
       "lib": "src"
     },

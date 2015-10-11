@@ -324,6 +324,26 @@ describe('Fluxlet', () => {
       }).toThrowError("Attempt to add an existing action 'existingAction' to fluxlet:(anon)")
     })
 
+    it('accepts multiple actions in an object', () => {
+      given.actions({
+        actionOne: () => s => s,
+        actionTwo: () => s => s
+      })
+
+      expect(dispatchers().actionOne).toBeDefined()
+      expect(dispatchers().actionTwo).toBeDefined()
+    })
+
+    it('accepts actions in multiple arguments', () => {
+      given.actions(
+        { actionOne: () => s => s },
+        { actionTwo: () => s => s }
+      )
+
+      expect(dispatchers().actionOne).toBeDefined()
+      expect(dispatchers().actionTwo).toBeDefined()
+    })
+
     describe('conditional', () => {
 
       it('without a then function will fail to register', () => {
@@ -445,6 +465,24 @@ describe('Fluxlet', () => {
       expect(() => {
         given.calculations({ existingCalc: s => s })
       }).toThrowError("Attempt to add an existing calculation 'existingCalc' to fluxlet:(anon)")
+    })
+
+    it('accepts multiple calculations in an object', () => {
+      given.calculations({
+        calcOne: s => s,
+        calcTwo: s => s
+      })
+
+      expect(calculations().length).toBe(2)
+    })
+
+    it('accepts calculations in multiple arguments', () => {
+      given.calculations(
+        { calcOne: s => s },
+        { calcTwo: s => s }
+      )
+
+      expect(calculations().length).toBe(2)
     })
 
     describe('as conditional', () => {
@@ -573,6 +611,24 @@ describe('Fluxlet', () => {
       expect(() => {
         given.sideEffects({ existingSideEffect: () => {} })
       }).toThrowError("Attempt to add an existing sideEffect 'existingSideEffect' to fluxlet:(anon)")
+    })
+
+    it('accepts multiple side effects in an object', () => {
+      given.sideEffects({
+        sideEffectOne: s => {},
+        sideEffectTwo: s => {}
+      })
+
+      expect(sideEffects().length).toBe(2)
+    })
+
+    it('accepts side effects in multiple arguments', () => {
+      given.sideEffects(
+        { sideEffectOne: s => {} },
+        { sideEffectTwo: s => {} }
+      )
+
+      expect(sideEffects().length).toBe(2)
     })
 
     describe('as conditional', () => {

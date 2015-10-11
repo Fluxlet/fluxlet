@@ -240,7 +240,9 @@ function createFluxlet(id, {params = [window.location.search, window.location.ha
     return Object.keys(obj).map(name => createCall(type, name, obj[name], wrap))
   }
 
-  function liveError(type, names) {
+  function liveError(type, args) {
+    const names = args.reduce((names, obj) => names.concat(Object.keys(obj)), [])
+
     return new Error(`Attempt to add ${type} ${names} to ${logId} after the first action was dispatched`)
   }
 
@@ -321,16 +323,18 @@ function createFluxlet(id, {params = [window.location.search, window.location.ha
     //       then: (...args) -> (state) -> state
     //     }
     //
-    actions(namedActions) {
+    actions(...namedActionsArgs) {
       if (live) {
-        throw liveError('actions', Object.keys(namedActions))
+        throw liveError('actions', namedActionsArgs)
       }
 
-      // Check that we aren't registering actions with the same names
-      checkForDuplicates("action", namedActions)
+      namedActionsArgs.forEach(namedActions => {
+        // Check that we aren't registering actions with the same names
+        checkForDuplicates("action", namedActions)
 
-      Object.keys(namedActions).forEach(name => {
-        dispatchers[name] = createCall("action", name, namedActions[name], createDispatcher)
+        Object.keys(namedActions).forEach(name => {
+          dispatchers[name] = createCall("action", name, namedActions[name], createDispatcher)
+        })
       })
       return this
     },
@@ -357,22 +361,24 @@ function createFluxlet(id, {params = [window.location.search, window.location.ha
     // The 'requiresCalculations' is an optional set of calculation names on which this calculation depends,
     // if any of the calculations have not already been registered an error will be thrown.
     //
-    calculations(namedCalculations) {
+    calculations(...namedCalculationsArgs) {
       if (live) {
-        throw liveError('calculations', Object.keys(namedCalculations))
+        throw liveError('calculations', namedCalculationsArgs)
       }
 
-      // Check that we aren't registering calculations with the same names
-      checkForDuplicates("calculation", namedCalculations)
+      namedCalculationsArgs.forEach(namedCalculations => {
+        // Check that we aren't registering calculations with the same names
+        checkForDuplicates("calculation", namedCalculations)
 
-      // Check the required calculations of these calculations have already been registered
-      checkRequirements("Calculation", namedCalculations, "requiresCalculations", "calculation")
+        // Check the required calculations of these calculations have already been registered
+        checkRequirements("Calculation", namedCalculations, "requiresCalculations", "calculation")
 
-      // Create the calculation functions and add them to the list
-      calculations.push(...createCalls("calculation", namedCalculations, logCall))
+        // Create the calculation functions and add them to the list
+        calculations.push(...createCalls("calculation", namedCalculations, logCall))
 
-      // Register these calculations
-      registerNames(namedCalculations, "calculation")
+        // Register these calculations
+        registerNames(namedCalculations, "calculation")
+      })
       return this
     },
 
@@ -400,21 +406,23 @@ function createFluxlet(id, {params = [window.location.search, window.location.ha
     // The 'requiresCalculations' and 'requiresSideEffects' are optional sets of calculation and side-effect names
     // on which this side-effect depends, if any of them have not already been registered an error will be thrown.
     //
-    sideEffects(namedSideEffects) {
-      // Check that we aren't registering side effects with the same names
-      checkForDuplicates("sideEffect", namedSideEffects)
+    sideEffects(...namedSideEffectsArgs) {
+      namedSideEffectsArgs.forEach(namedSideEffects => {
+        // Check that we aren't registering side effects with the same names
+        checkForDuplicates("sideEffect", namedSideEffects)
 
-      // Check the required calculations of these side-effects have already been registered
-      checkRequirements("Side effect", namedSideEffects, "requiresCalculations", "calculation")
+        // Check the required calculations of these side-effects have already been registered
+        checkRequirements("Side effect", namedSideEffects, "requiresCalculations", "calculation")
 
-      // Check the required side-effects of these side-effects have already been registered
-      checkRequirements("Side effect", namedSideEffects, "requiresSideEffects", "sideEffect")
+        // Check the required side-effects of these side-effects have already been registered
+        checkRequirements("Side effect", namedSideEffects, "requiresSideEffects", "sideEffect")
 
-      // Create the side-effect functions and add them to the list
-      sideEffects.push(...createCalls("sideEffect", namedSideEffects, logCall))
+        // Create the side-effect functions and add them to the list
+        sideEffects.push(...createCalls("sideEffect", namedSideEffects, logCall))
 
-      // Register these side-effects
-      registerNames(namedSideEffects, "sideEffect")
+        // Register these side-effects
+        registerNames(namedSideEffects, "sideEffect")
+      })
       return this
     },
 
@@ -426,8 +434,8 @@ function createFluxlet(id, {params = [window.location.search, window.location.ha
     //
     //     (dispatchers) -> void
     //
-    init(fn) {
-      fn(dispatchers)
+    init(...fns) {
+      fns.forEach(fn => fn(dispatchers))
       return this
     },
 
