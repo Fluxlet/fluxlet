@@ -1,4 +1,4 @@
-/* global window, console */
+/* global console */
 
 // # Fluxlet
 
@@ -11,17 +11,14 @@ const fluxlets = {}
 //
 // Create or retrieve a fluxlet
 //
-// opts can be used to pass in some configuration options, which at present is
-// only used for testing of the fluxlet url params
-//
-export default function(id, opts = {}) {
+export default function(id) {
 
   // Return an existing fluxlet by id if it exists
   if (id && fluxlets[id]) {
     return fluxlets[id]
   }
 
-  const instance = createFluxlet(id, opts)
+  const instance = createFluxlet(id)
 
   // Anonymous fluxlets are not stored
   if (id) {
@@ -31,22 +28,9 @@ export default function(id, opts = {}) {
   return instance
 }
 
-// Default logging settings
-export const defaultLogging = {
-  register: false,
-  dispatch: false,
-  call: false,
-  args: false,
-  state: false,
-  timing: false
-}
-
 // ## Internal constructor
 //
-function createFluxlet(id, {params = [window.location.search, window.location.hash]}) {
-
-  // Read the fluxlet prefixed url params
-  const urlParams = readUrlParams(id, params)
+function createFluxlet(id) {
 
   // A function that validates states as they are passed around
   let stateValidator = undefined
@@ -76,7 +60,14 @@ function createFluxlet(id, {params = [window.location.search, window.location.ha
   }
 
   // Log category settings
-  const logging = extend({}, defaultLogging, getLoggingFromUrlParams(urlParams, 'log'))
+  const logging = {
+    register: false,
+    dispatch: false,
+    call: false,
+    args: false,
+    state: false,
+    timing: false
+  }
 
   // Handy string for use in log and error messages
   const logId = `fluxlet:${id||'(anon)'}`
@@ -90,7 +81,7 @@ function createFluxlet(id, {params = [window.location.search, window.location.ha
 
   function log(category, type, name, args) {
     if (logging[category]) {
-      if ((logging.args || category === "state") && args && args.length) {
+      if (cons && (logging.args || category === "state") && args && args.length) {
         cons.log(`${logId} ${category} ${type}:${name}`, args)
       } else {
         cons.log(`${logId} ${category} ${type}:${name}`)
@@ -102,14 +93,14 @@ function createFluxlet(id, {params = [window.location.search, window.location.ha
   function start(category, type, name, args) {
     log(category, type, name, args)
 
-    if (logging[category] && logging.timing && cons.time) {
+    if (cons && logging[category] && logging.timing && cons.time) {
       cons.time(`${logId}:${category}:${type}:${name}`)
     }
   }
 
   // Stop a named timer and report the elapsed time
   function end(category, type, name) {
-    if (logging[category] && logging.timing && cons.timeEnd) {
+    if (cons && logging[category] && logging.timing && cons.timeEnd) {
       cons.timeEnd(`${logId}:${category}:${type}:${name}`)
     }
   }
@@ -445,7 +436,7 @@ function createFluxlet(id, {params = [window.location.search, window.location.ha
     //     f.logging({ call: false })
     //
     logging(categories) {
-      extend(logging, categories)
+      Object.keys(categories).forEach(key => logging[key] = categories[key])
       return this
     },
 
@@ -467,65 +458,9 @@ function createFluxlet(id, {params = [window.location.search, window.location.ha
       dispatchers: () => dispatchers,
       calculations: () => calculations,
       sideEffects: () => sideEffects,
-      logging: () => logging,
-      urlParams: () => urlParams,
       setConsole: (altCons) => {
         cons = altCons
       }
     }
   }
-}
-
-// Read 'fluxlet.' prefixed params from the given strings
-// 'fluxlet.<param>=<value>' will apply to any fluxlet
-// 'fluxlet.<id>.<param>=<value>' will apply only to the specific fluxlet by id
-// the fluxlet specific value will override the general value
-function readUrlParams(id, strs) {
-  const params = {}
-
-  function readParams(prefix) {
-    strs.forEach(str => {
-      const re = new RegExp(`\\b${prefix}\\.([^&=#?.]+)=([^&=#?]+)`, 'g')
-      let m
-      while ((m = re.exec(str))) {
-        params[m[1]] = m[2]
-      }
-    })
-  }
-
-  readParams('fluxlet')
-  id && readParams('fluxlet\\.' + id.replace(/[\\^$*+?.()|[\]{}]/g, '\\$&'))
-
-  return params
-}
-
-// Extract logging categories from a fluxlet url param
-function getLoggingFromUrlParams(urlParams, name) {
-  const categories = {}
-  if (urlParams[name]) {
-    if (urlParams[name] === "all") {
-      Object.keys(defaultLogging).forEach(key => {
-        categories[key] = true
-      })
-    } else {
-      urlParams[name].split(",").forEach(key => {
-        if (key) {
-          categories[key] = true
-        }
-      })
-    }
-  }
-  return categories
-}
-
-// Extend target object with the properties from all the given source objects
-export function extend(target, ...sources) {
-  sources.forEach(source => {
-    if (source && typeof source === 'object') {
-      Object.keys(source).forEach(key => {
-        target[key] = source[key]
-      })
-    }
-  })
-  return target
 }
