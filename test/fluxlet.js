@@ -267,7 +267,7 @@ describe('Fluxlet', () => {
       it('without a then function will fail to register', () => {
         expect(() => {
           given.actions({ invalidAction: {} })
-        }).toThrowError("action 'invalidAction' must be a function, or an object containing a 'then' & optional 'when' function")
+        }).toThrowError("Action 'invalidAction' must be a function, or an object containing a 'then' function")
       })
 
       it('are dispatched when true', () => {
@@ -408,7 +408,7 @@ describe('Fluxlet', () => {
       it('without a then function will fail to register', () => {
         expect(() => {
           given.calculations({ invalidCalc: {} })
-        }).toThrowError("calculation 'invalidCalc' must be a function, or an object containing a 'then' & optional 'when' function")
+        }).toThrowError("Calculation 'invalidCalc' must be a function, or an object containing a 'then' function")
       })
 
       it('is called when true', () => {
@@ -554,7 +554,7 @@ describe('Fluxlet', () => {
       it('without a then function will fail to register', () => {
         expect(() => {
           given.sideEffects({ invalidSideEffect: {} })
-        }).toThrowError("sideEffect 'invalidSideEffect' must be a function, or an object containing a 'then' & optional 'when' function")
+        }).toThrowError("Side effect 'invalidSideEffect' must be a function, or an object containing a 'then' function")
       })
 
       it('is called when true', () => {
@@ -602,208 +602,6 @@ describe('Fluxlet', () => {
       expect(f).toHaveBeenCalledWith({
         action1: jasmine.anything(),
         action2: jasmine.anything()
-      })
-    })
-  })
-
-  describe('logging', () => {
-    let consoleSpy
-    let timingHandle = "time not called"
-
-    beforeEach(() => {
-      consoleSpy = {
-        log: spyCreator('console.log')(() => {}),
-        time: spyCreator('console.time')((h) => { timingHandle = h }),
-        timeEnd: spyCreator('console.timeEnd')(() => {})
-      }
-
-      given.debug.setConsole(consoleSpy)
-    })
-
-    describe('register', () => {
-      beforeEach(() => {
-        given.logging({ register: true })
-      })
-
-      it('logs registration of a validator', () => {
-        given.validator(() => {})
-        expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) register validator:')
-      })
-
-      describe('with args', () => {
-        it('logs registration of a validator', () => {
-          given.logging({ args: true })
-          const v = () => {}
-          given.validator(v)
-          expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) register validator:', [v])
-        })
-      })
-
-      it('logs registration of an action', () => {
-        given.actions({ anAction: () => s => s })
-        expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) register action:anAction')
-      })
-
-      it('logs registration of a calculation', () => {
-        given.calculations({ aCalc: s => s })
-        expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) register calculation:aCalc')
-      })
-
-      it('logs registration of a side effect', () => {
-        given.sideEffects({ aSideEffect: () => {} })
-        expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) register sideEffect:aSideEffect')
-      })
-    })
-
-    describe('dispatch', () => {
-      beforeEach(() => {
-        given.logging({ dispatch: true })
-        given.actions({ anAction: (a, b) => s => s })
-      })
-
-      it('logs the action name on dispatch', () => {
-        when().anAction("A", "B")
-
-        expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) dispatch action:anAction')
-        expect(consoleSpy.time).not.toHaveBeenCalled()
-        expect(consoleSpy.timeEnd).not.toHaveBeenCalled()
-      })
-
-      describe('with args', () => {
-        it('logs the action name and args on dispatch', () => {
-          given.logging({ args: true })
-
-          when().anAction("A", "B")
-
-          expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) dispatch action:anAction', ['A', 'B'])
-        })
-      })
-
-      describe('with timing', () => {
-        it('logs the timing of the action', () => {
-          given.logging({ timing: true })
-
-          when().anAction()
-
-          expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) dispatch action:anAction')
-          expect(consoleSpy.time).toHaveBeenCalledWith(timingHandle)
-          expect(consoleSpy.timeEnd).toHaveBeenCalledWith(timingHandle)
-        })
-      })
-    })
-
-    describe('call', () => {
-      const s0 = { stage: 0 }
-      const s1 = { stage: 1 }
-
-      beforeEach(() => {
-        given.logging({ call: true })
-        given.state(s0)
-        given.actions({ doSomething: () => s => s1 })
-      })
-
-      it('logs the calculation name when called', () => {
-        given.calculations({ aCalc: s => s })
-
-        when().doSomething()
-
-        expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) call calculation:aCalc')
-        expect(consoleSpy.time).not.toHaveBeenCalled()
-        expect(consoleSpy.timeEnd).not.toHaveBeenCalled()
-      })
-
-      it('logs the side effect name when called', () => {
-        given.sideEffects({ aSideEffect: () => {} })
-
-        when().doSomething()
-
-        expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) call sideEffect:aSideEffect')
-        expect(consoleSpy.time).not.toHaveBeenCalled()
-        expect(consoleSpy.timeEnd).not.toHaveBeenCalled()
-      })
-
-      describe('with args', () => {
-        beforeEach(() => {
-          given.logging({ args: true })
-        })
-
-        it('logs the calculation name with transient state when called', () => {
-          given.calculations({ aCalc: s => s })
-
-          when().doSomething()
-
-          expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) call calculation:aCalc', [s1])
-        })
-
-        it('logs the side effect name with transient state when called', () => {
-          given.sideEffects({ aSideEffect: () => {} })
-
-          when().doSomething()
-
-          expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) call sideEffect:aSideEffect', [s1])
-        })
-      })
-
-      describe('with timing', () => {
-        beforeEach(() => {
-          given.logging({ timing: true })
-        })
-
-        it('logs the timing of the calculation', () => {
-          given.calculations({ aCalc: s => s })
-
-          when().doSomething()
-
-          expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) call calculation:aCalc')
-          expect(consoleSpy.time).toHaveBeenCalledWith(timingHandle)
-          expect(consoleSpy.timeEnd).toHaveBeenCalledWith(timingHandle)
-        })
-
-        it('logs the timing of the side effect', () => {
-          given.sideEffects({ aSideEffect: () => {} })
-
-          when().doSomething()
-
-          expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) call sideEffect:aSideEffect')
-          expect(consoleSpy.time).toHaveBeenCalledWith(timingHandle)
-          expect(consoleSpy.timeEnd).toHaveBeenCalledWith(timingHandle)
-        })
-      })
-    })
-
-    describe('state', () => {
-      const s0 = { stage: 0 }
-      const s1 = { stage: 1 }
-      const s2 = { stage: 2 }
-
-      beforeEach(() => {
-        given.logging({ state: true })
-        given.state(s0)
-        given.actions({ doSomething: () => s => s1 })
-        given.actions({ doNothing: () => s => s })
-      })
-
-      it('logs the starting state before dispatch', () => {
-        given.calculations({ calcSomething: s => s2 })
-
-        when().doSomething()
-
-        expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) state before:doSomething', [s0])
-      })
-
-      it('logs the new state before side effects when the state has changed', () => {
-        given.calculations({ calcSomething: s => s2 })
-
-        when().doSomething()
-
-        expect(consoleSpy.log.calls.count()).toBe(2)
-        expect(consoleSpy.log).toHaveBeenCalledWith('fluxlet:(anon) state after:doSomething', [s2])
-      })
-
-      it('does not log the after state if it has not changed', () => {
-        when().doNothing()
-
-        expect(consoleSpy.log.calls.count()).toBe(1)
       })
     })
   })

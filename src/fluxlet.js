@@ -1,5 +1,3 @@
-/* global console */
-
 // # Fluxlet
 
 // Fluxlet uses a fluent API to construct an instance, a fluxlet can be named or annonymous.
@@ -41,6 +39,9 @@ function createFluxlet(id) {
   // The current action in dispatch
   let dispatching = undefined
 
+  // Hook register
+  const hooks = {}
+
   // The map of action dispatchers
   const dispatchers = {}
 
@@ -59,16 +60,6 @@ function createFluxlet(id) {
     sideEffect: {}
   }
 
-  // Log category settings
-  const logging = {
-    register: false,
-    dispatch: false,
-    call: false,
-    args: false,
-    state: false,
-    timing: false
-  }
-
   // Handy string for use in log and error messages
   const logId = `fluxlet:${id||'(anon)'}`
 
@@ -76,160 +67,124 @@ function createFluxlet(id) {
   // after which certain aspects of the fluxlet may not be modified
   let live = false
 
-  // Local reference to console, which can be overriden for testing
-  let cons = console
+  // Call a hook
+  function hook(name, params) {
+    const postHooks = hooks[name] && hooks[name].map(preHook => preHook(params))
 
-  function log(category, type, name, args) {
-    if (logging[category]) {
-      if (cons && (logging.args || category === "state") && args && args.length) {
-        cons.log(`${logId} ${category} ${type}:${name}`, args)
-      } else {
-        cons.log(`${logId} ${category} ${type}:${name}`)
-      }
-    }
-  }
-
-  // Log and start a named timer
-  function start(category, type, name, args) {
-    log(category, type, name, args)
-
-    if (cons && logging[category] && logging.timing && cons.time) {
-      cons.time(`${logId}:${category}:${type}:${name}`)
-    }
-  }
-
-  // Stop a named timer and report the elapsed time
-  function end(category, type, name) {
-    if (cons && logging[category] && logging.timing && cons.timeEnd) {
-      cons.timeEnd(`${logId}:${category}:${type}:${name}`)
-    }
+    return postHooks && postHooks.length ?
+      // create a fn that passes its arg through the chain of postHooks
+      postHooks.reduce.bind(postHooks, (result, postHook) => {
+        const hookResult = postHook ? postHook(result) : undefined
+        return hookResult === undefined ? result : hookResult
+      }) :
+      // no postHooks, so just return the identity fn
+      v => v
   }
 
   // Create a dispatcher function for an action
-  function createDispatcher(action, type, name, condition) {
+  function createDispatcher(actionName, action) {
     // This is the dispatcher function, created for the given action.
     // It args are passed through to the action function later.
-    return (...args) => {
+    return (...actionArgs) => {
       // The fluxlet become 'live' on the first action dispatch
       live = true
 
-      // Test the condition (if given) before dispatching the action
-      if (condition && !condition(lockedState, ...args)) {
-        return
-      }
-
-      start("dispatch", type, name, args)
-
       if (dispatching) {
         // This dispatch will fail if called directly from within another dispatch
-        throw new Error(`Attempt to dispatch action '${name}' within action '${dispatching}' in ${logId}`)
+        throw new Error(`Attempt to dispatch action '${actionName}' within action '${dispatching}' in ${logId}`)
       }
 
-      // Lock the dispatcher for the current action
-      dispatching = name
+      // Test the action condition (if given) before dispatching the action
+      const enable = action.when ? action.when(lockedState, ...actionArgs) : true
 
       // Get the starting state
       const startState = lockedState
 
-      log("state", "before", name, [startState])
+      // Call dispatch hooks
+      const postDispatch = hook("dispatch", { logId, actionName, actionArgs, startState, enable })
+
+      // Lock the dispatcher for the current action
+      dispatching = actionName
 
       try {
-        // Call the action with the args given to the dispatcher
-        const stateManipulator = action(...args)
+        if (enable) {
+          // Call action hooks
+          const postAction = hook("action", { logId, actionName, actionArgs, startState })
 
-        // We expect the action to return a function that will manipulate the the state
-        if (typeof stateManipulator !== "function") {
-          throw new TypeError(`Action '${name}' did not return a function as expected in ${logId}`)
-        }
+          // Call the action with the args given to the dispatcher
+          const stateManipulator = (action.then || action)(...actionArgs)
 
-        // Pass the state the to the function returned from the action
-        let transientState = stateManipulator(startState)
+          // We expect the action to return a function that will manipulate the the state
+          if (typeof stateManipulator !== "function") {
+            throw new TypeError(`Action '${actionName}' did not return a function as expected in ${logId}`)
+          }
 
-        // Validate the state returned by the action
-        stateValidator && transientState !== startState && stateValidator(transientState)
+          // Pass the state the to the function returned from the action, and then through any post-action hooks
+          let transientState = postAction(stateManipulator(startState))
 
-        // Chain calculation calls
-        calculations.forEach(calculation => {
-          const priorState = transientState
+          // Validate the state returned by the action
+          stateValidator && transientState !== startState && stateValidator(transientState)
 
-          // passing the state return from one into the next,
-          // the starting state prior to the action is also given.
-          transientState = calculation(priorState, startState)
+          // Call the hook for entire calculation chain
+          const postCalculations = hook("calculations", { logId, actionName, startState, transientState })
 
-          // Validate the state returned by the calculation
-          stateValidator && transientState !== priorState && stateValidator(transientState)
-        })
+          // Chain calculation calls
+          calculations.forEach(calculation => {
+            const priorState = transientState
 
-        // Store state and determine if a change has occurred
-        if (transientState !== startState) {
-          lockedState = transientState
+            // Test the calculation condition to determine whether the calculation should be called
+            const enable = calculation.when ? calculation.when(priorState, startState) : true
 
-          log("state", "after", name, [lockedState])
+            // Call the individual calculation hook
+            const postCalculation = hook("calculation", { logId, actionName, calculation, startState, priorState, enable })
 
-          // Call side-effects only if state has changed
-          sideEffects.forEach(sideEffect => {
-            // passing the new state, original state, and all action dispatchers
-            sideEffect(lockedState, startState, dispatchers)
+            // Call the actual calculation, passing the state return from the previous,
+            // the starting state prior to the action is also given.
+            // Then result is then passed through any post-calculation hooks
+            transientState = postCalculation(enable ? (calculation.then || calculation)(priorState, startState) : priorState)
+
+            // Validate the state returned by the calculation
+            stateValidator && transientState !== priorState && stateValidator(transientState)
           })
+
+          // Pass the final state of the calculation chain through any post-calculation chain hooks
+          transientState = postCalculations(transientState)
+
+          // Determine if the state has changed and store the new state
+          if (transientState !== startState) {
+            lockedState = transientState
+
+            // Call the hook for the entire set of side-effects
+            const postSideEffects = hook("sideEffects", { logId, actionName, lockedState })
+
+            // Call side-effects only if state has changed
+            sideEffects.forEach(sideEffect => {
+
+              // Test the side-effect condition to determine whether the side-effect should be called
+              const enable = sideEffect.when ? sideEffect.when(lockedState, startState) : true
+
+              // Call the individual side-effect hook
+              const postSideEffect = hook("sideEffect", { logId, actionName, sideEffect, startState, lockedState, dispatchers, enable })
+
+              // Call the actual side-effect, passing the new state, original state, and all action dispatchers
+              // Passing any return values from the side-effects to any post-side-effect hooks
+              postSideEffect(enable ? (sideEffect.then || sideEffect)(lockedState, startState, dispatchers) : undefined)
+            })
+
+            // Call the post-hook for the set of side-effects
+            postSideEffects()
+          }
         }
       } finally {
         // Release lock ready for another dispatch
         dispatching = undefined
 
-        end("dispatch", type, name)
+        // Call the post-dispatch hook with the final state
+        postDispatch(lockedState)
       }
     }
   }
 
-  // Wrapper for calculation and sideEffect functions, that simply logs the call
-  function logCall(fn, type, name) {
-    return (...args) => {
-      try {
-        start("call", type, name, [args[0]])
-        return fn(...args)
-      } finally {
-        end("call", type, name)
-      }
-    }
-  }
-
-  // Create the wrapper for action, calculation and side-effect functions or conditionals
-  function createCall(type, name, fnOrCond, wrap) {
-    log("register", type, name)
-
-    if (fnOrCond && fnOrCond.then && fnOrCond.then.apply) {
-      if (fnOrCond.when && fnOrCond.when.apply) {
-        if (type === "action") {
-          return wrap(fnOrCond.then, type, name, fnOrCond.when)
-        } else {
-          return conditionalCall(fnOrCond.when, wrap(fnOrCond.then, type, name))
-        }
-      } else {
-        return wrap(fnOrCond.then, type, name)
-      }
-    } else if (fnOrCond && fnOrCond.apply) {
-      return wrap(fnOrCond, type, name)
-    } else {
-      throw new TypeError(`${type} '${name}' must be a function, or an object containing a 'then' & optional 'when' function`)
-    }
-  }
-
-  // Create the wrapper for conditional functions
-  function conditionalCall(when, then) {
-    return (...args) => {
-      // A conditional is only run if its 'when' function returns true
-      if (when(...args)) {
-        return then(...args)
-      } else {
-        return args[0]
-      }
-    }
-  }
-
-  // Create the wrappers for all named calculation or side effects given in obj
-  function createCalls(type, obj, wrap) {
-    return Object.keys(obj).map(name => createCall(type, name, obj[name], wrap))
-  }
 
   function liveError(type, args) {
     const names = args.reduce((names, obj) => names.concat(Object.keys(obj)), [])
@@ -263,13 +218,47 @@ function createFluxlet(id) {
     })
   }
 
+  // Check that all components are either functions or objects with a 'then' function
+  function checkFunctions(type, obj) {
+    Object.keys(obj).forEach(name => {
+      if (typeof (obj[name].then || obj[name]) !== 'function') {
+        throw new TypeError(`${type} '${name}' must be a function, or an object containing a 'then' function`)
+      }
+    })
+  }
+
   function registerNames(obj, registerType) {
     Object.keys(obj).forEach(name => {
       registered[registerType][name] = true
     })
   }
 
-  return {
+  const fluxlet = {
+    // ## Register a hook
+    // The hook is called before something happens, it's passed a parameters
+    // object which containing various information depending what is happening.
+    //
+    //     hook: (params) => void | postHook
+    //
+    // The hook may optionally return a post-hook fn, which is called after the
+    // thing has happened, with the result of it. The post-hook fn may return
+    // nothing (ie. undefined), in which case the result is passed on untouched
+    // or it can return a modified result.
+    //
+    //     postHook: (value) => void | value
+    //
+    // Look for calls to the *hook* function throughout this code to see what
+    // hooks can be registered
+    //
+    hooks(...namedHooksArgs) {
+      namedHooksArgs.forEach(namedHooks => {
+        Object.keys(namedHooks).forEach(name => {
+          (hooks[name] = hooks[name] || []).push(namedHooks[name])
+        })
+      })
+      return fluxlet
+    },
+
     // Set the state validator function, generally only used in testing, it is expected to throw an error if it
     // finds the state to be invalid. It will be called, passing the state as the only arguments, on setting of
     // the initial state, and after each action and calculation if a new state has been returned.
@@ -277,9 +266,8 @@ function createFluxlet(id) {
       if (lockedState) {
         throw new Error("The state validator should be set before the initial state of the fluxlet is set")
       }
-      log("register", "validator", "", [validator])
       stateValidator = validator
-      return this
+      return fluxlet
     },
 
     // Set (or modify) the initial state of the fluxlet
@@ -287,14 +275,9 @@ function createFluxlet(id) {
       if (live) {
         throw new Error(`Attempt to set state of ${logId} after the first action was dispatched`)
       }
-      log("create", "state", state)
-      if (typeof state === "function") {
-        lockedState = state(lockedState)
-      } else {
-        lockedState = state
-      }
+      lockedState = hook("registerState", { logId, state, lockedState })(typeof state === "function" ? state(lockedState) : state)
       stateValidator && stateValidator(lockedState)
-      return this
+      return fluxlet
     },
 
     // Add named actions to the fluxlet. An action takes some operational params,
@@ -320,14 +303,19 @@ function createFluxlet(id) {
       }
 
       namedActionsArgs.forEach(namedActions => {
+        // Check all actions are functions or objects with a 'then' function
+        checkFunctions("Action", namedActions)
+
         // Check that we aren't registering actions with the same names
         checkForDuplicates("action", namedActions)
 
         Object.keys(namedActions).forEach(name => {
-          dispatchers[name] = createCall("action", name, namedActions[name], createDispatcher)
+          const action = hook("registerAction", { logId, name })(namedActions[name])
+          const dispatcher = createDispatcher(name, action)
+          dispatchers[name] = hook("registerDispatcher", { logId, name })(dispatcher)
         })
       })
-      return this
+      return fluxlet
     },
 
     // Add named calculations to the fluxlet. Calculations are chained, the first is given the state
@@ -358,19 +346,26 @@ function createFluxlet(id) {
       }
 
       namedCalculationsArgs.forEach(namedCalculations => {
+        // Check all calculations are functions or objects with a 'then' function
+        checkFunctions("Calculation", namedCalculations)
+
         // Check that we aren't registering calculations with the same names
         checkForDuplicates("calculation", namedCalculations)
 
         // Check the required calculations of these calculations have already been registered
         checkRequirements("Calculation", namedCalculations, "requiresCalculations", "calculation")
 
-        // Create the calculation functions and add them to the list
-        calculations.push(...createCalls("calculation", namedCalculations, logCall))
+        Object.keys(namedCalculations).forEach(name => {
+          // Pass the calculation through any hooks
+          const calculation = hook("registerCalculation", { logId, name })(namedCalculations[name])
+          // Add it to the list
+          calculations.push(calculation)
+        })
 
         // Register these calculations
         registerNames(namedCalculations, "calculation")
       })
-      return this
+      return fluxlet
     },
 
     // Add named side-effects to the fluxlet. All side-effects receive the same final state that
@@ -399,6 +394,9 @@ function createFluxlet(id) {
     //
     sideEffects(...namedSideEffectsArgs) {
       namedSideEffectsArgs.forEach(namedSideEffects => {
+        // Check all side-effects are functions or objects with a 'then' function
+        checkFunctions("Side effect", namedSideEffects)
+
         // Check that we aren't registering side effects with the same names
         checkForDuplicates("sideEffect", namedSideEffects)
 
@@ -408,13 +406,17 @@ function createFluxlet(id) {
         // Check the required side-effects of these side-effects have already been registered
         checkRequirements("Side effect", namedSideEffects, "requiresSideEffects", "sideEffect")
 
-        // Create the side-effect functions and add them to the list
-        sideEffects.push(...createCalls("sideEffect", namedSideEffects, logCall))
+        Object.keys(namedSideEffects).forEach(name => {
+          // Pass the side-effect through any hooks
+          const sideEffect = hook("registerSideEffect", { logId, name })(namedSideEffects[name])
+          // Add it to the list
+          sideEffects.push(sideEffect)
+        })
 
         // Register these side-effects
         registerNames(namedSideEffects, "sideEffect")
       })
-      return this
+      return fluxlet
     },
 
     // Call a initialisation function with the map of action dispatchers.
@@ -427,17 +429,7 @@ function createFluxlet(id) {
     //
     init(...fns) {
       fns.forEach(fn => fn(dispatchers))
-      return this
-    },
-
-    // Set logging levels, taking an object of logging level categories as keys to a boolean value indicating
-    // whether that type of logging should be enabled.
-    //
-    //     f.logging({ call: false })
-    //
-    logging(categories) {
-      Object.keys(categories).forEach(key => logging[key] = categories[key])
-      return this
+      return fluxlet
     },
 
     // Remove a named fluxlet from the internal map of fluxlets and anonymise it
@@ -457,10 +449,9 @@ function createFluxlet(id) {
       dispatching: () => dispatching,
       dispatchers: () => dispatchers,
       calculations: () => calculations,
-      sideEffects: () => sideEffects,
-      setConsole: (altCons) => {
-        cons = altCons
-      }
+      sideEffects: () => sideEffects
     }
   }
+
+  return fluxlet
 }
