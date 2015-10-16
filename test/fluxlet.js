@@ -10,7 +10,6 @@ function spyCreator(type) {
 const actionSpy = spyCreator('action')
 const calculationSpy = spyCreator('calculation')
 const sideEffectSpy = spyCreator('side effect')
-const validatorSpy = spyCreator('validator')
 const whenSpy = spyCreator('when')
 
 describe('Fluxlet', () => {
@@ -50,7 +49,6 @@ describe('Fluxlet', () => {
   const sideEffects = () => given.debug.sideEffects()
   const when = dispatchers
   const state = () => given.debug.state()
-  const validator = () => given.debug.validator()
 
   beforeEach(() => {
     given = fluxlet()
@@ -98,105 +96,6 @@ describe('Fluxlet', () => {
       expect(() => {
         given.state({})
       }).toThrowError("Attempt to set state of fluxlet:(anon) after the first action was dispatched")
-    })
-  })
-
-  describe('validator', () => {
-
-    it('sets the validator function', () => {
-      const f = () => {}
-
-      given.validator(f)
-
-      expect(validator()).toBe(f)
-    })
-
-    it('can not be set after state', () => {
-      given.state({})
-
-      expect(() => {
-        given.validator(() => {})
-      }).toThrowError("The state validator should be set before the initial state of the fluxlet is set")
-    })
-
-    it('is called to validate initial state', () => {
-      const s = {}
-      const v = validatorSpy(s => {})
-
-      given.validator(v)
-      given.state(s)
-
-      expect(v).toHaveBeenCalledWith(s)
-    })
-
-    it('is called to validate state returned from an action', () => {
-      const s1 = { stage: 1 }
-      const s2 = { stage: 2 }
-      const v = validatorSpy(s => {})
-
-      given.validator(v)
-      given.state(s1)
-      given.actions({ testValidatorAction: () => s => s2 })
-
-      when().testValidatorAction()
-
-      expect(v.calls.count()).toBe(2)
-      expect(v).toHaveBeenCalledWith(s2)
-    })
-
-    it('is not called after an action if state has not changed', () => {
-      const s1 = { stage: 1 }
-      const v = validatorSpy(s => {})
-
-      given.validator(v)
-      given.state(s1)
-      given.actions({ testValidatorAction: () => s => s })
-
-      when().testValidatorAction()
-
-      expect(v.calls.count()).toBe(1)
-    })
-
-    it('is called to validate state returned from a calculation', () => {
-      const s1 = { stage: 1 }
-      const s2 = { stage: 2 }
-      const s3 = { stage: 3 }
-      const v = validatorSpy(s => {})
-
-      given.validator(v)
-      given.state(s1)
-      given.actions({ testValidatorAction: () => s => s2 })
-      given.calculations({ testValidatorCalc: s => s3 })
-
-      when().testValidatorAction()
-
-      expect(v.calls.count()).toBe(3)
-      expect(v).toHaveBeenCalledWith(s3)
-    })
-
-    it('is not called after a calculation if the calculation has not changed the state', () => {
-      const s1 = { stage: 1 }
-      const s2 = { stage: 2 }
-      const v = validatorSpy(s => {})
-
-      given.validator(v)
-      given.state(s1)
-      given.actions({ testValidatorAction: () => s => s2 })
-      given.calculations({ testValidatorCalc: s => s })
-
-      when().testValidatorAction()
-
-      expect(v.calls.count()).toBe(2)
-    })
-
-    it('should throw an error on invalid state', () => {
-      given.validator(() => {
-        throw "INVALID STATE"
-      })
-
-      expect(() => {
-        given.state({})
-      }).toThrow("INVALID STATE")
     })
   })
 
