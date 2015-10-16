@@ -16,7 +16,7 @@
     "karma-jspm": "^2.0.1"
   },
   "scripts": {
-    "prepublish": "babel -d lib src",
+    "prepublish": "babel --modules umd -d lib src",
     "pretest": "jspm install -y",
     "test": "karma start --single-run"
   },
