@@ -1,8 +1,10 @@
+/* global module, require, __dirname */
+
 module.exports = function () {
 
   // Preprocessor to transpile imports/exports and possibly other ES6 elements
   var babelPreprocessor = file => require('babel')
-                                    .transform(file.content, {sourceMap: true});
+                                    .transform(file.content, {sourceMap: true})
 
   return {
     files: [
@@ -28,23 +30,51 @@ module.exports = function () {
     middleware: (app, express) => {
       app.use('/jspm_packages',
               express.static(
-                 require('path').join(__dirname, 'jspm_packages')));
+                 require('path').join(__dirname, 'jspm_packages')))
     },
 
     bootstrap: function (wallaby) {
-      // Preventing wallaby from starting the test run
-      wallaby.delayStart();
+      // Polyfill bind for PhantomJS 1.x
+      if (!Function.prototype.bind) {
+        Function.prototype.bind = function(oThis) {
+          if (typeof this !== 'function') {
+            // closest thing possible to the ECMAScript 5
+            // internal IsCallable function
+            throw new TypeError('Function.prototype.bind - what is trying to be bound is not callable')
+          }
 
-      var promises = [];
+          var aArgs   = Array.prototype.slice.call(arguments, 1),
+            fToBind = this,
+            fNOP    = function() {},
+            fBound  = function() {
+              return fToBind.apply(this instanceof fNOP && oThis
+                  ? this
+                  : oThis,
+                aArgs.concat(Array.prototype.slice.call(arguments)))
+            }
+
+          // test this.prototype in case of native functions binding:
+          if (this.prototype)
+            fNOP.prototype = this.prototype
+          fBound.prototype = new fNOP()
+
+          return fBound
+        }
+      }
+
+      // Preventing wallaby from starting the test run
+      wallaby.delayStart()
+
+      var promises = []
       for (var i = 0, len = wallaby.tests.length; i < len; i++) {
         // loading wallaby tests
-        promises.push(System['import'](wallaby.tests[i].replace(/\.js$/, '')));
+        promises.push(System['import'](wallaby.tests[i].replace(/\.js$/, '')))
       }
 
       // starting wallaby test run when everything required is loaded
       Promise.all(promises).then(function () {
-        wallaby.start();
-      });
+        wallaby.start()
+      })
     },
 
     env: {
@@ -52,5 +82,5 @@ module.exports = function () {
     },
 
     debug: true
-  };
-};
+  }
+}
