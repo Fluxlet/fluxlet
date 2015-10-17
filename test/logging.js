@@ -2,7 +2,7 @@
 /*eslint-disable no-unused-vars */
 
 import fluxlet from 'src/fluxlet'
-import * as log from 'src/fluxlet-log'
+import * as log from 'src/logging'
 
 function spyCreator(type) {
   return fn => jasmine.createSpy(type, fn).and.callThrough()

@@ -2,7 +2,7 @@
 /*eslint-disable no-unused-vars */
 
 import fluxlet from 'src/fluxlet'
-import validator from 'src/fluxlet-validator'
+import validation from 'src/validation'
 
 function spyCreator(type) {
   return fn => jasmine.createSpy(type, fn).and.callThrough()
@@ -31,7 +31,7 @@ describe('Fluxlet', () => {
       const s = {}
       const v = validatorSpy(s => {})
 
-      given.hooks(validator(v))
+      given.hooks(validation(v))
       given.state(s)
 
       expect(v).toHaveBeenCalledWith(s)
@@ -42,7 +42,7 @@ describe('Fluxlet', () => {
       const s2 = { stage: 2 }
       const v = validatorSpy(s => {})
 
-      given.hooks(validator(v))
+      given.hooks(validation(v))
       given.state(s1)
       given.actions({ testValidatorAction: () => s => s2 })
 
@@ -56,7 +56,7 @@ describe('Fluxlet', () => {
       const s1 = { stage: 1 }
       const v = validatorSpy(s => {})
 
-      given.hooks(validator(v))
+      given.hooks(validation(v))
       given.state(s1)
       given.actions({ testValidatorAction: () => s => s })
 
@@ -71,7 +71,7 @@ describe('Fluxlet', () => {
       const s3 = { stage: 3 }
       const v = validatorSpy(s => {})
 
-      given.hooks(validator(v))
+      given.hooks(validation(v))
       given.state(s1)
       given.actions({ testValidatorAction: () => s => s2 })
       given.calculations({ testValidatorCalc: s => s3 })
@@ -87,7 +87,7 @@ describe('Fluxlet', () => {
       const s2 = { stage: 2 }
       const v = validatorSpy(s => {})
 
-      given.hooks(validator(v))
+      given.hooks(validation(v))
       given.state(s1)
       given.actions({ testValidatorAction: () => s => s2 })
       given.calculations({ testValidatorCalc: s => s })
@@ -98,9 +98,11 @@ describe('Fluxlet', () => {
     })
 
     it('should throw an error on invalid state', () => {
-      given.hooks(validator(() => {
+      const v = () => {
         throw "INVALID STATE"
-      }))
+      }
+
+      given.hooks(validation(v))
 
       expect(() => {
         given.state({})
