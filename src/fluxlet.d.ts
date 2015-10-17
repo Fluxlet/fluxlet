@@ -12,69 +12,69 @@
 declare function fluxlet<S,D>(id?: string): Fluxlet<S,D>
 
 interface Fluxlet<S,D> {
-    hooks(...namedHooks: Array<NamedHooks<S,D>>): Fluxlet<S, D>
+  hooks(...namedHooks: Array<NamedHooks<S,D>>): Fluxlet<S, D>
 
-    state(state: StateInitializer<S>): Fluxlet<S,D>
+  state(state: StateInitializer<S>): Fluxlet<S,D>
 
-    actions(...namedActions: Array<Named<Action<S>>>): Fluxlet<S,D>
+  actions(...namedActions: Array<Named<Action<S>>>): Fluxlet<S,D>
 
-    calculations(...namedCalculations: Array<Named<Calculation<S>>>): Fluxlet<S,D>
+  calculations(...namedCalculations: Array<Named<Calculation<S>>>): Fluxlet<S,D>
 
-    sideEffects(...namedSideEffects: Array<Named<SideEffect<S,D>>>): Fluxlet<S,D>
+  sideEffects(...namedSideEffects: Array<Named<SideEffect<S,D>>>): Fluxlet<S,D>
 
-    init(...fn: Array<Init<D>>): Fluxlet<S,D>
+  init(...fn: Array<Init<D>>): Fluxlet<S,D>
 
-    remove(): void
+  remove(): void
 }
 
 declare type StateInitializer<S> = (state: S | void) => S
 
 interface ActionFn<S> {
-    (...args: any[]): (state: S) => S
+  (...args: any[]): (state: S) => S
 }
 
 interface ActionObj<S> {
-    when?: (state: S, ...args: any[]) => boolean
-    then: ActionFn<S>
+  when?: (state: S, ...args: any[]) => boolean
+  then: ActionFn<S>
 }
 
 declare type Action<S> = ActionFn<S> | ActionObj<S>
 
 interface CalculationFn<S> {
-    (state: S, prevState: S): S
+  (state: S, prevState: S): S
 }
 
 interface CalculationObj<S> {
-    requiresCalculations?: string|string[]
-    when?: (state: S, prevState: S) => boolean
-    then: CalculationFn<S>
+  requiresCalculations?: string|string[]
+  when?: (state: S, prevState: S) => boolean
+  then: CalculationFn<S>
 }
 
 declare type Calculation<S> = CalculationFn<S> | CalculationObj<S>
 
 interface SideEffectFn<S,D> {
-    (state: S, prevState: S, dispatchers: D): void | any
+  (state: S, prevState: S, dispatchers: D): void | any
 }
 
 interface SideEffectObj<S,D> {
-    requiresCalculations?: string|string[]
-    requiresSideEffects?: string|string[]
-    when?: (state: S, prevState: S) => boolean
-    then: SideEffectFn<S,D>
+  requiresCalculations?: string|string[]
+  requiresSideEffects?: string|string[]
+  when?: (state: S, prevState: S) => boolean
+  then: SideEffectFn<S,D>
 }
 
 declare type SideEffect<S,D> = SideEffectFn<S,D> | SideEffectObj<S,D>
 
 interface Init<D> {
-    (dispatchers: D): void
+  (dispatchers: D): void
 }
 
 interface Dispatcher {
-    (...args: any[]): void
+  (...args: any[]): void
 }
 
 interface Named<T> {
-    [index: string]: T
+  [index: string]: T
 }
 
 declare type Dispatchers = Named<Dispatcher>
