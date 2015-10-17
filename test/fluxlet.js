@@ -1,10 +1,18 @@
-/*eslint-env jasmine */
+/*eslint-env mocha */
 /*eslint-disable no-unused-vars */
-
 import fluxlet from 'src/fluxlet'
 
+import chai, { expect } from 'chai'
+import sinon, { match } from 'sinon'
+import sinonChai from 'sinon-chai'
+
+chai.use(sinonChai)
+
 function spyCreator(type) {
-  return fn => jasmine.createSpy(type, fn).and.callThrough()
+  return fn => {
+    fn.displayName = type
+    return sinon.spy(fn)
+  }
 }
 
 const actionSpy = spyCreator('action')
@@ -16,18 +24,18 @@ describe('Fluxlet', () => {
 
   it('can be created without an id', () => {
     const f = fluxlet()
-    expect(f.debug.id()).toBeUndefined()
+    expect(f.debug.id()).to.be.undefined
   })
 
   it('can be created with an id', () => {
     const f = fluxlet("flux-name")
-    expect(f.debug.id()).toEqual("flux-name")
+    expect(f.debug.id()).to.equal("flux-name")
   })
 
   it('can retrieve an existing instance by id', () => {
     const e = fluxlet("existing-fluxlet")
     const f = fluxlet("existing-fluxlet")
-    expect(f).toEqual(e)
+    expect(f).to.equal(e)
   })
 
   it('can be removed by id and will be anonymised', () => {
@@ -35,8 +43,8 @@ describe('Fluxlet', () => {
     f.remove()
     const n = fluxlet("removed-fluxlet")
 
-    expect(n).not.toEqual(f)
-    expect(f.debug.id()).toBeUndefined()
+    expect(n).not.to.equal(f)
+    expect(f.debug.id()).to.be.undefined
   })
 })
 
@@ -57,7 +65,7 @@ describe('Fluxlet', () => {
   describe('state', () => {
 
     it('returns fluxlet', () => {
-      expect(given.state({})).toBe(given)
+      expect(given.state({})).to.equal(given)
     })
 
     it('sets the initial state', () => {
@@ -65,7 +73,7 @@ describe('Fluxlet', () => {
 
       given.state(s)
 
-      expect(state()).toBe(s)
+      expect(state()).to.equal(s)
     })
 
     it('sets the initial state from a function', () => {
@@ -74,7 +82,7 @@ describe('Fluxlet', () => {
 
       given.state(f)
 
-      expect(state()).toBe(s)
+      expect(state()).to.equal(s)
     })
 
     it('passes the existing state to the function', () => {
@@ -84,7 +92,7 @@ describe('Fluxlet', () => {
       given.state(s)
       given.state(f)
 
-      expect(f).toHaveBeenCalledWith(s)
+      expect(f).to.have.been.calledWith(s)
     })
 
     it('can not be set after an action has been dispatched', () => {
@@ -95,7 +103,7 @@ describe('Fluxlet', () => {
 
       expect(() => {
         given.state({})
-      }).toThrowError("Attempt to set state of fluxlet:(anon) after the first action was dispatched")
+      }).to.throw(Error, "Attempt to set state of fluxlet:(anon) after the first action was dispatched")
     })
   })
 
@@ -103,7 +111,7 @@ describe('Fluxlet', () => {
 
     it('are wrapped with a dispatcher', () => {
       given.actions({ testA: () => s => s })
-      expect(dispatchers().testA).toBeDefined()
+      expect(dispatchers().testA).to.be.defined
     })
 
     it('are dispatched', () => {
@@ -112,7 +120,7 @@ describe('Fluxlet', () => {
 
       when().testB()
 
-      expect(testB).toHaveBeenCalled()
+      expect(testB).to.have.been.called
     })
 
     it('can not be directly called from within another action', () => {
@@ -121,7 +129,7 @@ describe('Fluxlet', () => {
 
       expect(() => {
         when().testNest1()
-      }).toThrowError("Attempt to dispatch action 'testNest2' within action 'testNest1' in fluxlet:(anon)")
+      }).to.throw(Error, "Attempt to dispatch action 'testNest2' within action 'testNest1' in fluxlet:(anon)")
     })
 
     it('can not be registered after the first dispatch', () => {
@@ -130,7 +138,7 @@ describe('Fluxlet', () => {
 
       expect(() => {
         given.actions({ testLateAction: () => s => s })
-      }).toThrowError("Attempt to add actions testLateAction to fluxlet:(anon) after the first action was dispatched")
+      }).to.throw(Error, "Attempt to add actions testLateAction to fluxlet:(anon) after the first action was dispatched")
     })
 
     it('can not override existing actions with the same name', () => {
@@ -138,7 +146,7 @@ describe('Fluxlet', () => {
 
       expect(() => {
         given.actions({ existingAction: () => s => s })
-      }).toThrowError("Attempt to add an existing action 'existingAction' to fluxlet:(anon)")
+      }).to.throw(Error, "Attempt to add an existing action 'existingAction' to fluxlet:(anon)")
     })
 
     it('accepts multiple actions in an object', () => {
@@ -147,8 +155,8 @@ describe('Fluxlet', () => {
         actionTwo: () => s => s
       })
 
-      expect(dispatchers().actionOne).toBeDefined()
-      expect(dispatchers().actionTwo).toBeDefined()
+      expect(dispatchers().actionOne).to.be.defined
+      expect(dispatchers().actionTwo).to.be.defined
     })
 
     it('accepts actions in multiple arguments', () => {
@@ -157,8 +165,8 @@ describe('Fluxlet', () => {
         { actionTwo: () => s => s }
       )
 
-      expect(dispatchers().actionOne).toBeDefined()
-      expect(dispatchers().actionTwo).toBeDefined()
+      expect(dispatchers().actionOne).to.be.defined
+      expect(dispatchers().actionTwo).to.be.defined
     })
 
     describe('conditional', () => {
@@ -166,7 +174,7 @@ describe('Fluxlet', () => {
       it('without a then function will fail to register', () => {
         expect(() => {
           given.actions({ invalidAction: {} })
-        }).toThrowError("Action 'invalidAction' must be a function, or an object containing a 'then' function")
+        }).to.throw(TypeError, "Action 'invalidAction' must be a function, or an object containing a 'then' function")
       })
 
       it('are dispatched when true', () => {
@@ -179,8 +187,8 @@ describe('Fluxlet', () => {
 
         when().testC()
 
-        expect(testC.when).toHaveBeenCalled()
-        expect(testC.then).toHaveBeenCalled()
+        expect(testC.when).to.have.been.called
+        expect(testC.then).to.have.been.called
       })
 
       it('are not dispatched when false', () => {
@@ -193,8 +201,8 @@ describe('Fluxlet', () => {
 
         when().testD()
 
-        expect(testD.when).toHaveBeenCalled()
-        expect(testD.then).not.toHaveBeenCalled()
+        expect(testD.when).to.have.been.called
+        expect(testD.then).not.to.have.been.called
       })
 
       it('when is passed state and args', () => {
@@ -209,8 +217,8 @@ describe('Fluxlet', () => {
 
         when().testE(10, 'B')
 
-        expect(testE.when).toHaveBeenCalledWith(initialState, 10, 'B')
-        expect(testE.then).toHaveBeenCalledWith(10, 'B')
+        expect(testE.when).to.have.been.calledWith(initialState, 10, 'B')
+        expect(testE.then).to.have.been.calledWith(10, 'B')
       })
 
     })
@@ -219,7 +227,7 @@ describe('Fluxlet', () => {
       const testE = actionSpy(() => { foo: "bar" })
       given.actions({ testE })
 
-      expect(() => { when().testE() }).toThrowError()
+      expect(() => { when().testE() }).to.throw(Error)
     })
   })
 
@@ -231,7 +239,7 @@ describe('Fluxlet', () => {
 
     it('can be a plain function', () => {
       given.calculations({ testCalcA: s => s })
-      expect(calculations().length).toBe(1)
+      expect(calculations().length).to.equal(1)
     })
 
     it('is called within any action dispatch', () => {
@@ -241,7 +249,7 @@ describe('Fluxlet', () => {
 
       when().anyAction()
 
-      expect(testCalcB).toHaveBeenCalled()
+      expect(testCalcB).to.have.been.called
     })
 
     it('can not be registered after the first dispatch', () => {
@@ -249,7 +257,7 @@ describe('Fluxlet', () => {
 
       expect(() => {
         given.calculations({ testLateCalc: s => s })
-      }).toThrowError("Attempt to add calculations testLateCalc to fluxlet:(anon) after the first action was dispatched")
+      }).to.throw(Error, "Attempt to add calculations testLateCalc to fluxlet:(anon) after the first action was dispatched")
     })
 
     it('will fail to register if a required calculation has not been registered', () => {
@@ -260,7 +268,7 @@ describe('Fluxlet', () => {
             then: s => s
           }
         })
-      }).toThrowError("Calculation 'testCalcRequires' requires the calculation 'missingCalc' in fluxlet:(anon)")
+      }).to.throw(Error, "Calculation 'testCalcRequires' requires the calculation 'missingCalc' in fluxlet:(anon)")
     })
 
     it('will register if a required calculation has been registered', () => {
@@ -273,7 +281,7 @@ describe('Fluxlet', () => {
         }
       })
 
-      expect(calculations().length).toBe(2)
+      expect(calculations().length).to.equal(2)
     })
 
     it('can not override existing calculations with the same name', () => {
@@ -281,7 +289,7 @@ describe('Fluxlet', () => {
 
       expect(() => {
         given.calculations({ existingCalc: s => s })
-      }).toThrowError("Attempt to add an existing calculation 'existingCalc' to fluxlet:(anon)")
+      }).to.throw(Error, "Attempt to add an existing calculation 'existingCalc' to fluxlet:(anon)")
     })
 
     it('accepts multiple calculations in an object', () => {
@@ -290,7 +298,7 @@ describe('Fluxlet', () => {
         calcTwo: s => s
       })
 
-      expect(calculations().length).toBe(2)
+      expect(calculations().length).to.equal(2)
     })
 
     it('accepts calculations in multiple arguments', () => {
@@ -299,7 +307,7 @@ describe('Fluxlet', () => {
         { calcTwo: s => s }
       )
 
-      expect(calculations().length).toBe(2)
+      expect(calculations().length).to.equal(2)
     })
 
     describe('as conditional', () => {
@@ -307,7 +315,7 @@ describe('Fluxlet', () => {
       it('without a then function will fail to register', () => {
         expect(() => {
           given.calculations({ invalidCalc: {} })
-        }).toThrowError("Calculation 'invalidCalc' must be a function, or an object containing a 'then' function")
+        }).to.throw(Error, "Calculation 'invalidCalc' must be a function, or an object containing a 'then' function")
       })
 
       it('is called when true', () => {
@@ -320,8 +328,8 @@ describe('Fluxlet', () => {
 
         when().anyAction()
 
-        expect(testCalcC.when).toHaveBeenCalled()
-        expect(testCalcC.then).toHaveBeenCalled()
+        expect(testCalcC.when).to.have.been.called
+        expect(testCalcC.then).to.have.been.called
       })
 
       it('is not called when false', () => {
@@ -334,8 +342,8 @@ describe('Fluxlet', () => {
 
         when().anyAction()
 
-        expect(testCalcD.when).toHaveBeenCalled()
-        expect(testCalcD.then).not.toHaveBeenCalled()
+        expect(testCalcD.when).to.have.been.called
+        expect(testCalcD.then).not.to.have.been.called
       })
     })
   })
@@ -350,7 +358,7 @@ describe('Fluxlet', () => {
 
     it('can be a plain function', () => {
       given.sideEffects({ testSideEffectA: () => {} })
-      expect(sideEffects().length).toBe(1)
+      expect(sideEffects().length).to.equal(1)
     })
 
     it('is called after an action that changes state', () => {
@@ -360,7 +368,7 @@ describe('Fluxlet', () => {
 
       when().doSomething()
 
-      expect(testSideEffectB).toHaveBeenCalled()
+      expect(testSideEffectB).to.have.been.called
     })
 
     it('is not called after an action that does not change state', () => {
@@ -370,7 +378,7 @@ describe('Fluxlet', () => {
 
       when().doNothing()
 
-      expect(testSideEffectC).not.toHaveBeenCalled()
+      expect(testSideEffectC).not.to.have.been.called
     })
 
     it('will fail to register if a required calculation has not been registered', () => {
@@ -381,7 +389,7 @@ describe('Fluxlet', () => {
             then: () => {}
           }
         })
-      }).toThrowError("Side effect 'testSideEffectRequires' requires the calculation 'missingCalc' in fluxlet:(anon)")
+      }).to.throw(Error, "Side effect 'testSideEffectRequires' requires the calculation 'missingCalc' in fluxlet:(anon)")
     })
 
     it('will register if a required calculation has been registered', () => {
@@ -394,8 +402,8 @@ describe('Fluxlet', () => {
         }
       })
 
-      expect(calculations().length).toBe(1)
-      expect(sideEffects().length).toBe(1)
+      expect(calculations().length).to.equal(1)
+      expect(sideEffects().length).to.equal(1)
     })
 
     it('will fail to register if a required side effect has not been registered', () => {
@@ -406,7 +414,7 @@ describe('Fluxlet', () => {
             then: () => {}
           }
         })
-      }).toThrowError("Side effect 'testSideEffectRequires' requires the sideEffect 'missingSideEffect' in fluxlet:(anon)")
+      }).to.throw(Error, "Side effect 'testSideEffectRequires' requires the sideEffect 'missingSideEffect' in fluxlet:(anon)")
     })
 
     it('will register if a required side effect has been registered', () => {
@@ -419,7 +427,7 @@ describe('Fluxlet', () => {
         }
       })
 
-      expect(sideEffects().length).toBe(2)
+      expect(sideEffects().length).to.equal(2)
     })
 
     it('can not override existing side effects with the same name', () => {
@@ -427,7 +435,7 @@ describe('Fluxlet', () => {
 
       expect(() => {
         given.sideEffects({ existingSideEffect: () => {} })
-      }).toThrowError("Attempt to add an existing sideEffect 'existingSideEffect' to fluxlet:(anon)")
+      }).to.throw(Error, "Attempt to add an existing sideEffect 'existingSideEffect' to fluxlet:(anon)")
     })
 
     it('accepts multiple side effects in an object', () => {
@@ -436,7 +444,7 @@ describe('Fluxlet', () => {
         sideEffectTwo: s => {}
       })
 
-      expect(sideEffects().length).toBe(2)
+      expect(sideEffects().length).to.equal(2)
     })
 
     it('accepts side effects in multiple arguments', () => {
@@ -445,7 +453,7 @@ describe('Fluxlet', () => {
         { sideEffectTwo: s => {} }
       )
 
-      expect(sideEffects().length).toBe(2)
+      expect(sideEffects().length).to.equal(2)
     })
 
     describe('as conditional', () => {
@@ -453,7 +461,7 @@ describe('Fluxlet', () => {
       it('without a then function will fail to register', () => {
         expect(() => {
           given.sideEffects({ invalidSideEffect: {} })
-        }).toThrowError("Side effect 'invalidSideEffect' must be a function, or an object containing a 'then' function")
+        }).to.throw(Error, "Side effect 'invalidSideEffect' must be a function, or an object containing a 'then' function")
       })
 
       it('is called when true', () => {
@@ -466,8 +474,8 @@ describe('Fluxlet', () => {
 
         when().doSomething()
 
-        expect(testSideEffectD.when).toHaveBeenCalled()
-        expect(testSideEffectD.then).toHaveBeenCalled()
+        expect(testSideEffectD.when).to.have.been.called
+        expect(testSideEffectD.then).to.have.been.called
       })
 
       it('is not called when false', () => {
@@ -480,8 +488,8 @@ describe('Fluxlet', () => {
 
         when().doSomething()
 
-        expect(testSideEffectE.when).toHaveBeenCalled()
-        expect(testSideEffectE.then).not.toHaveBeenCalled()
+        expect(testSideEffectE.when).to.have.been.called
+        expect(testSideEffectE.then).not.to.have.been.called
       })
     })
   })
@@ -498,9 +506,9 @@ describe('Fluxlet', () => {
 
       given.init(f)
 
-      expect(f).toHaveBeenCalledWith({
-        action1: jasmine.anything(),
-        action2: jasmine.anything()
+      expect(f).to.have.been.calledWith({
+        action1: match.any,
+        action2: match.any
       })
     })
   })
@@ -511,11 +519,11 @@ describe('Fluxlet', () => {
       it('becomes true after the first dispatch', () => {
         given.actions({ anyAction: () => s => s })
 
-        expect(given.debug.live()).toBe(false)
+        expect(given.debug.live()).to.equal(false)
 
         when().anyAction()
 
-        expect(given.debug.live()).toBe(true)
+        expect(given.debug.live()).to.equal(true)
       })
     })
 
@@ -523,7 +531,7 @@ describe('Fluxlet', () => {
       it('returns the name of the currently dispatching action', () => {
         given.actions({
           anAction: () => s => {
-            expect(given.debug.dispatching()).toBe("anAction")
+            expect(given.debug.dispatching()).to.equal("anAction")
             return s
           }
         })

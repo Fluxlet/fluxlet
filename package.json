@@ -3,17 +3,17 @@
   "version": "0.0.1",
   "description": "An application state management micro-framework",
   "main": "lib/fluxlet",
+  "registry": "jspm",
   "dependencies": {},
   "devDependencies": {
     "babel": "^5.8.23",
-    "jasmine-core": "^2.3.4",
-    "jspm": "^0.16.7",
+    "jspm": "^0.16.12",
     "karma": "^0.13.10",
-    "karma-chrome-launcher": "^0.2.0",
     "karma-cli": "^0.1.0",
     "karma-firefox-launcher": "^0.1.6",
-    "karma-jasmine": "^0.3.6",
-    "karma-jspm": "^2.0.1"
+    "karma-jspm": "^2.0.1",
+    "karma-mocha": "^0.2.0",
+    "mocha": "^2.3.3"
   },
   "scripts": {
     "prepublish": "babel --modules umd -d lib src",
@@ -21,7 +21,6 @@
     "test": "karma start --single-run"
   },
   "jspm": {
-    "registry": "jspm",
     "main": "fluxlet",
     "format": "es6",
     "directories": {
@@ -31,7 +30,10 @@
     "devDependencies": {
       "babel": "npm:babel-core@^5.8.24",
       "babel-runtime": "npm:babel-runtime@^5.8.24",
-      "core-js": "npm:core-js@^1.1.4"
+      "chai": "npm:chai@^3.3.0",
+      "core-js": "npm:core-js@^1.1.4",
+      "sinon": "npm:sinon@^1.17.1",
+      "sinon-chai": "npm:sinon-chai@^2.8.0"
     }
   },
   "repository": "fluxlet/fluxlet",

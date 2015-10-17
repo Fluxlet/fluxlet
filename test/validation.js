@@ -1,11 +1,20 @@
-/*eslint-env jasmine */
+/*eslint-env mocha */
 /*eslint-disable no-unused-vars */
 
 import fluxlet from 'src/fluxlet'
 import validation from 'src/validation'
 
+import chai, { expect } from 'chai'
+import sinon from 'sinon'
+import sinonChai from 'sinon-chai'
+
+chai.use(sinonChai)
+
 function spyCreator(type) {
-  return fn => jasmine.createSpy(type, fn).and.callThrough()
+  return fn => {
+    fn.displayName = type
+    return sinon.spy(fn)
+  }
 }
 
 const validatorSpy = spyCreator('validator')
@@ -15,11 +24,7 @@ describe('Fluxlet', () => {
   let given
 
   const dispatchers = () => given.debug.dispatchers()
-  // const calculations = () => given.debug.calculations()
-  // const sideEffects = () => given.debug.sideEffects()
   const when = dispatchers
-  // const state = () => given.debug.state()
-  // const validator = () => given.debug.validator()
 
   beforeEach(() => {
     given = fluxlet()
@@ -34,7 +39,7 @@ describe('Fluxlet', () => {
       given.hooks(validation(v))
       given.state(s)
 
-      expect(v).toHaveBeenCalledWith(s)
+      expect(v).to.have.been.calledWith(s)
     })
 
     it('is called to validate state returned from an action', () => {
@@ -48,8 +53,8 @@ describe('Fluxlet', () => {
 
       when().testValidatorAction()
 
-      expect(v.calls.count()).toBe(2)
-      expect(v).toHaveBeenCalledWith(s2)
+      expect(v).to.have.been.calledTwice
+      expect(v).to.have.been.calledWith(s2)
     })
 
     it('is not called after an action if state has not changed', () => {
@@ -62,7 +67,7 @@ describe('Fluxlet', () => {
 
       when().testValidatorAction()
 
-      expect(v.calls.count()).toBe(1)
+      expect(v).to.have.been.calledOnce
     })
 
     it('is called to validate state returned from a calculation', () => {
@@ -78,8 +83,8 @@ describe('Fluxlet', () => {
 
       when().testValidatorAction()
 
-      expect(v.calls.count()).toBe(3)
-      expect(v).toHaveBeenCalledWith(s3)
+      expect(v).to.have.been.calledThrice
+      expect(v).to.have.been.calledWith(s3)
     })
 
     it('is not called after a calculation if the calculation has not changed the state', () => {
@@ -94,7 +99,7 @@ describe('Fluxlet', () => {
 
       when().testValidatorAction()
 
-      expect(v.calls.count()).toBe(2)
+      expect(v).to.have.been.calledTwice
     })
 
     it('should throw an error on invalid state', () => {
@@ -106,7 +111,7 @@ describe('Fluxlet', () => {
 
       expect(() => {
         given.state({})
-      }).toThrow("INVALID STATE")
+      }).to.throw("INVALID STATE")
     })
   })
 })
