@@ -36,6 +36,9 @@ function createFluxlet(id) {
   // The current action in dispatch
   let dispatching = undefined
 
+  // Shared data for use by hooks
+  const shared = {}
+
   // Hook register
   const hooks = {}
 
@@ -60,12 +63,13 @@ function createFluxlet(id) {
   // Handy string for use in log and error messages
   const logId = `fluxlet:${id||'(anon)'}`
 
-  // Set to true on the first action dispatch,
-  // after which certain aspects of the fluxlet may not be modified
-  let live = false
-
   // Call a hook
-  function hook(name, params) {
+  function hook(name, params = {}) {
+    // Add common params
+    params.logId = logId
+    params.fluxlet = fluxlet
+    params.shared = shared
+
     const postHooks = hooks[name] && hooks[name].map(preHook => preHook(params))
 
     return postHooks && postHooks.length ?
@@ -83,8 +87,6 @@ function createFluxlet(id) {
     // This is the dispatcher function, created for the given action.
     // It args are passed through to the action function later.
     return (...actionArgs) => {
-      // The fluxlet become 'live' on the first action dispatch
-      live = true
 
       if (dispatching) {
         // This dispatch will fail if called directly from within another dispatch
@@ -98,7 +100,7 @@ function createFluxlet(id) {
       const startState = lockedState
 
       // Call dispatch hooks
-      const postDispatch = hook("dispatch", { logId, actionName, actionArgs, startState, enable })
+      const postDispatch = hook("dispatch", { actionName, actionArgs, startState, enable })
 
       // Lock the dispatcher for the current action
       dispatching = actionName
@@ -106,7 +108,7 @@ function createFluxlet(id) {
       try {
         if (enable) {
           // Call action hooks
-          const postAction = hook("action", { logId, actionName, actionArgs, startState })
+          const postAction = hook("action", { actionName, actionArgs, startState })
 
           // Call the action with the args given to the dispatcher
           const stateManipulator = (action.then || action)(...actionArgs)
@@ -120,7 +122,7 @@ function createFluxlet(id) {
           let transientState = postAction(stateManipulator(startState))
 
           // Call the hook for entire calculation chain
-          const postCalculations = hook("calculations", { logId, actionName, startState, transientState })
+          const postCalculations = hook("calculations", { actionName, startState, transientState })
 
           // Chain calculation calls
           calculations.forEach(calculation => {
@@ -130,7 +132,7 @@ function createFluxlet(id) {
             const enable = calculation.when ? calculation.when(priorState, startState) : true
 
             // Call the individual calculation hook
-            const postCalculation = hook("calculation", { logId, actionName, calculation, startState, priorState, enable })
+            const postCalculation = hook("calculation", { actionName, calculation, startState, priorState, enable })
 
             // Call the actual calculation, passing the state return from the previous,
             // the starting state prior to the action is also given.
@@ -146,7 +148,7 @@ function createFluxlet(id) {
             lockedState = transientState
 
             // Call the hook for the entire set of side-effects
-            const postSideEffects = hook("sideEffects", { logId, actionName, lockedState })
+            const postSideEffects = hook("sideEffects", { actionName, lockedState })
 
             // Call side-effects only if state has changed
             sideEffects.forEach(sideEffect => {
@@ -155,7 +157,7 @@ function createFluxlet(id) {
               const enable = sideEffect.when ? sideEffect.when(lockedState, startState) : true
 
               // Call the individual side-effect hook
-              const postSideEffect = hook("sideEffect", { logId, actionName, sideEffect, startState, lockedState, dispatchers, enable })
+              const postSideEffect = hook("sideEffect", { actionName, sideEffect, startState, lockedState, dispatchers, enable })
 
               // Call the actual side-effect, passing the new state, original state, and all action dispatchers
               // Passing any return values from the side-effects to any post-side-effect hooks
@@ -171,16 +173,9 @@ function createFluxlet(id) {
         dispatching = undefined
 
         // Call the post-dispatch hook with the final state
-        postDispatch(lockedState)
+        lockedState = postDispatch(lockedState)
       }
     }
-  }
-
-
-  function liveError(type, args) {
-    const names = args.reduce((names, obj) => names.concat(Object.keys(obj)), [])
-
-    return new Error(`Attempt to add ${type} ${names} to ${logId} after the first action was dispatched`)
   }
 
   // Check that an action, calculation, or sideEffect hasn't already been registered
@@ -252,10 +247,7 @@ function createFluxlet(id) {
 
     // Set (or modify) the initial state of the fluxlet
     state(state) {
-      if (live) {
-        throw new Error(`Attempt to set state of ${logId} after the first action was dispatched`)
-      }
-      lockedState = hook("registerState", { logId, state, lockedState })(typeof state === "function" ? state(lockedState) : state)
+      lockedState = hook("registerState", { state, lockedState })(typeof state === "function" ? state(lockedState) : state)
       return fluxlet
     },
 
@@ -277,11 +269,7 @@ function createFluxlet(id) {
     //     }
     //
     actions(...namedActionsArgs) {
-      if (live) {
-        throw liveError('actions', namedActionsArgs)
-      }
-
-      namedActionsArgs.forEach(namedActions => {
+      namedActionsArgs.map(hook("registerActions")).forEach(namedActions => {
         // Check all actions are functions or objects with a 'then' function
         checkFunctions("Action", namedActions)
 
@@ -289,9 +277,9 @@ function createFluxlet(id) {
         checkForDuplicates("action", namedActions)
 
         Object.keys(namedActions).forEach(name => {
-          const action = hook("registerAction", { logId, name })(namedActions[name])
+          const action = hook("registerAction", { name })(namedActions[name])
           const dispatcher = createDispatcher(name, action)
-          dispatchers[name] = hook("registerDispatcher", { logId, name })(dispatcher)
+          dispatchers[name] = hook("registerDispatcher", { name })(dispatcher)
         })
       })
       return fluxlet
@@ -320,11 +308,7 @@ function createFluxlet(id) {
     // if any of the calculations have not already been registered an error will be thrown.
     //
     calculations(...namedCalculationsArgs) {
-      if (live) {
-        throw liveError('calculations', namedCalculationsArgs)
-      }
-
-      namedCalculationsArgs.forEach(namedCalculations => {
+      namedCalculationsArgs.map(hook("registerCalculations")).forEach(namedCalculations => {
         // Check all calculations are functions or objects with a 'then' function
         checkFunctions("Calculation", namedCalculations)
 
@@ -336,7 +320,7 @@ function createFluxlet(id) {
 
         Object.keys(namedCalculations).forEach(name => {
           // Pass the calculation through any hooks
-          const calculation = hook("registerCalculation", { logId, name })(namedCalculations[name])
+          const calculation = hook("registerCalculation", { name })(namedCalculations[name])
           // Add it to the list
           calculations.push(calculation)
         })
@@ -372,7 +356,7 @@ function createFluxlet(id) {
     // on which this side-effect depends, if any of them have not already been registered an error will be thrown.
     //
     sideEffects(...namedSideEffectsArgs) {
-      namedSideEffectsArgs.forEach(namedSideEffects => {
+      namedSideEffectsArgs.map(hook("registerSideEffects")).forEach(namedSideEffects => {
         // Check all side-effects are functions or objects with a 'then' function
         checkFunctions("Side effect", namedSideEffects)
 
@@ -387,7 +371,7 @@ function createFluxlet(id) {
 
         Object.keys(namedSideEffects).forEach(name => {
           // Pass the side-effect through any hooks
-          const sideEffect = hook("registerSideEffect", { logId, name })(namedSideEffects[name])
+          const sideEffect = hook("registerSideEffect", { name })(namedSideEffects[name])
           // Add it to the list
           sideEffects.push(sideEffect)
         })
@@ -422,7 +406,6 @@ function createFluxlet(id) {
     // These tools are for testing and debugging on the console only, and should NEVER be called from code
     debug: {
       id: () => id,
-      live: () => live,
       state: () => lockedState,
       dispatching: () => dispatching,
       dispatchers: () => dispatchers,

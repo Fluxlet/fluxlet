@@ -79,19 +79,26 @@ interface Named<T> {
 
 declare type Dispatchers = Named<Dispatcher>
 
+declare type Shared = Object
+
 interface NamedHooks<S,D> {
-  registerState?: Hook<RegisterStateHookParams<S>, S>
+  registerState?: Hook<RegisterStateHookParams<S,D>, S>
 
-  registerAction?: Hook<RegisterHookParams, Action<S>>
-  registerDispatcher?: Hook<RegisterHookParams, Dispatcher>
-  registerCalculation?: Hook<RegisterHookParams, Calculation<S>>
-  registerSideEffect?: Hook<RegisterHookParams, SideEffect<S,D>>
+  registerActions?: Hook<CommonHookParams<S,D>, Named<Action<S>>>
+  registerAction?: Hook<RegisterHookParams<S,D>, Action<S>>
+  registerDispatcher?: Hook<RegisterHookParams<S,D>, Dispatcher>
 
-  dispatch?: Hook<DispatchHookParams<S>, S>
-  action?: Hook<ActionHookParams<S>, S>
-  calculations?: Hook<CalculationsHookParams<S>, S>
-  calculation?: Hook<CalculationHookParams<S>, S>
-  sideEffects?: Hook<SideEffectsHookParams<S>, void>
+  registerCalculations?: Hook<CommonHookParams<S,D>, Named<Calculation<S>>>
+  registerCalculation?: Hook<RegisterHookParams<S,D>, Calculation<S>>
+
+  registerSideEffects?: Hook<CommonHookParams<S,D>, Named<SideEffect<S,D>>>
+  registerSideEffect?: Hook<RegisterHookParams<S,D>, SideEffect<S,D>>
+
+  dispatch?: Hook<DispatchHookParams<S,D>, S>
+  action?: Hook<ActionHookParams<S,D>, S>
+  calculations?: Hook<CalculationsHookParams<S,D>, S>
+  calculation?: Hook<CalculationHookParams<S,D>, S>
+  sideEffects?: Hook<SideEffectsHookParams<S,D>, void>
   sideEffect?: Hook<SideEffectHookParams<S,D>, any>
 }
 
@@ -103,36 +110,38 @@ interface PostHook<V> {
   (value: V): void | V
 }
 
-interface CommonHookParams {
+interface CommonHookParams<S,D> {
   logId: string
+  fluxlet: Fluxlet<S,D>
+  shared: Shared
 }
 
-interface RegisterStateHookParams<S> extends CommonHookParams {
+interface RegisterStateHookParams<S,D> extends CommonHookParams<S,D> {
   state: StateInitializer<S>
   lockedState: S
 }
 
-interface RegisterHookParams extends CommonHookParams {
+interface RegisterHookParams<S,D> extends CommonHookParams<S,D> {
   name: string
 }
 
-interface ActionHookParams<S> extends CommonHookParams {
+interface ActionHookParams<S,D> extends CommonHookParams<S,D> {
   actionName: string
   actionArgs: any[]
   startState: S
 }
 
-interface DispatchHookParams<S> extends ActionHookParams<S> {
+interface DispatchHookParams<S,D> extends ActionHookParams<S,D> {
   enable: boolean
 }
 
-interface CalculationsHookParams<S> extends CommonHookParams {
+interface CalculationsHookParams<S,D> extends CommonHookParams<S,D> {
   actionName: string
   startState: S
   transientState: S
 }
 
-interface CalculationHookParams<S> extends CommonHookParams {
+interface CalculationHookParams<S,D> extends CommonHookParams<S,D> {
   actionName: string
   calculation: Calculation<S>
   startState: S
@@ -140,12 +149,12 @@ interface CalculationHookParams<S> extends CommonHookParams {
   enable: boolean
 }
 
-interface SideEffectsHookParams<S> extends CommonHookParams {
+interface SideEffectsHookParams<S,D> extends CommonHookParams<S,D> {
   actionName: string
   lockedState: S
 }
 
-interface SideEffectHookParams<S,D> extends CommonHookParams {
+interface SideEffectHookParams<S,D> extends CommonHookParams<S,D> {
   actionName: string
   sideEffect: SideEffect<S,D>
   startState: S

@@ -94,17 +94,6 @@ describe('Fluxlet', () => {
 
       expect(f).to.have.been.calledWith(s)
     })
-
-    it('can not be set after an action has been dispatched', () => {
-      given.state({})
-      given.actions({ testAction: () => s => s })
-
-      when().testAction()
-
-      expect(() => {
-        given.state({})
-      }).to.throw(Error, "Attempt to set state of fluxlet:(anon) after the first action was dispatched")
-    })
   })
 
   describe('actions', () => {
@@ -130,15 +119,6 @@ describe('Fluxlet', () => {
       expect(() => {
         when().testNest1()
       }).to.throw(Error, "Attempt to dispatch action 'testNest2' within action 'testNest1' in fluxlet:(anon)")
-    })
-
-    it('can not be registered after the first dispatch', () => {
-      given.actions({ anyAction: () => s => s })
-      when().anyAction()
-
-      expect(() => {
-        given.actions({ testLateAction: () => s => s })
-      }).to.throw(Error, "Attempt to add actions testLateAction to fluxlet:(anon) after the first action was dispatched")
     })
 
     it('can not override existing actions with the same name', () => {
@@ -250,14 +230,6 @@ describe('Fluxlet', () => {
       when().anyAction()
 
       expect(testCalcB).to.have.been.called
-    })
-
-    it('can not be registered after the first dispatch', () => {
-      when().anyAction()
-
-      expect(() => {
-        given.calculations({ testLateCalc: s => s })
-      }).to.throw(Error, "Attempt to add calculations testLateCalc to fluxlet:(anon) after the first action was dispatched")
     })
 
     it('will fail to register if a required calculation has not been registered', () => {
@@ -514,18 +486,6 @@ describe('Fluxlet', () => {
   })
 
   describe('debug', () => {
-
-    describe('live', () => {
-      it('becomes true after the first dispatch', () => {
-        given.actions({ anyAction: () => s => s })
-
-        expect(given.debug.live()).to.equal(false)
-
-        when().anyAction()
-
-        expect(given.debug.live()).to.equal(true)
-      })
-    })
 
     describe('dispatching', () => {
       it('returns the name of the currently dispatching action', () => {
