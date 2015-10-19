@@ -36,9 +36,6 @@ function createFluxlet(id) {
   // The current action in dispatch
   let dispatching = undefined
 
-  // Shared data for use by hooks
-  const shared = {}
-
   // Hook register
   const hooks = {}
 
@@ -51,13 +48,16 @@ function createFluxlet(id) {
   // The list of side effect functions
   const sideEffects = []
 
-  // All registered actions, calculation and sideEffect names, for duplicates
-  // and requirements checking (value is always true for calculations and
-  // sideEffects)
+  // All registered actions, calculations and sideEffects, for use by hooks
   const registered = {
-    action: dispatchers,
-    calculation: {},
-    sideEffect: {}
+    actions: {},
+    calculations: {},
+    sideEffects: {}
+  }
+
+  // Shared data for use by hooks
+  const shared = {
+    registered
   }
 
   // Handy string for use in log and error messages
@@ -179,27 +179,10 @@ function createFluxlet(id) {
   }
 
   // Check that an action, calculation, or sideEffect hasn't already been registered
-  function checkForDuplicates(type, obj) {
+  function checkForDuplicates(type, obj, register) {
     Object.keys(obj).forEach(name => {
-      if (registered[type][name]) {
+      if (register[name]) {
         throw new Error(`Attempt to add an existing ${type} '${name}' to ${logId}`)
-      }
-    })
-  }
-
-  // Check that the required calculations or sideEffects have already been registered
-  function checkRequirements(type, obj, requiresProp, registerType) {
-    Object.keys(obj).forEach(name => {
-      let requires = obj[name][requiresProp]
-      if (requires) {
-        if (!Array.isArray(requires)) {
-          requires = [requires]
-        }
-        requires.forEach(requirement => {
-          if (!registered[registerType][requirement]) {
-            throw new Error(`${type} '${name}' requires the ${registerType} '${requirement}' in ${logId}`)
-          }
-        })
       }
     })
   }
@@ -213,28 +196,29 @@ function createFluxlet(id) {
     })
   }
 
-  function registerNames(obj, registerType) {
-    Object.keys(obj).forEach(name => {
-      registered[registerType][name] = true
-    })
-  }
-
   const fluxlet = {
     // ## Register a hook
+    //
+    //     (...{name: hook}) => Fluxlet
+    //
     // The hook is called before something happens, it's passed a parameters
     // object which containing various information depending what is happening.
     //
     //     hook: (params) => void | postHook
     //
-    // The hook may optionally return a post-hook fn, which is called after the
-    // thing has happened, with the result of it. The post-hook fn may return
-    // nothing (ie. undefined), in which case the result is passed on untouched
-    // or it can return a modified result.
+    // The hook may optionally return a post-hook fn, which is called
+    // immediately for registration hooks with whatever is being registered, or
+    // is called after the activity with its result for hooks within the
+    // dispatch lifecycle.
+    //
+    // if the hook or post-hook returns undefined it's treated as if an identity
+    // function was supplied as the post-hook, ie. the result is simply passed
+    // through. This makes validation/logging hooks easy to implement.
     //
     //     postHook: (value) => void | value
     //
     // Look for calls to the *hook* function throughout this code to see what
-    // hooks can be registered
+    // hooks can be registered, or refer to the fluxlet.d.ts file.
     //
     hooks(...namedHooksArgs) {
       namedHooksArgs.forEach(namedHooks => {
@@ -274,10 +258,11 @@ function createFluxlet(id) {
         checkFunctions("Action", namedActions)
 
         // Check that we aren't registering actions with the same names
-        checkForDuplicates("action", namedActions)
+        checkForDuplicates("action", namedActions, registered.actions)
 
         Object.keys(namedActions).forEach(name => {
           const action = hook("registerAction", { name })(namedActions[name])
+          registered.actions[name] = action
           const dispatcher = createDispatcher(name, action)
           dispatchers[name] = hook("registerDispatcher", { name })(dispatcher)
         })
@@ -313,20 +298,18 @@ function createFluxlet(id) {
         checkFunctions("Calculation", namedCalculations)
 
         // Check that we aren't registering calculations with the same names
-        checkForDuplicates("calculation", namedCalculations)
+        checkForDuplicates("calculation", namedCalculations, registered.calculations)
 
         // Check the required calculations of these calculations have already been registered
-        checkRequirements("Calculation", namedCalculations, "requiresCalculations", "calculation")
+        // checkRequirements("Calculation", namedCalculations, "requiresCalculations", "calculation")
 
         Object.keys(namedCalculations).forEach(name => {
           // Pass the calculation through any hooks
           const calculation = hook("registerCalculation", { name })(namedCalculations[name])
           // Add it to the list
           calculations.push(calculation)
+          registered.calculations[name] = calculation
         })
-
-        // Register these calculations
-        registerNames(namedCalculations, "calculation")
       })
       return fluxlet
     },
@@ -361,23 +344,21 @@ function createFluxlet(id) {
         checkFunctions("Side effect", namedSideEffects)
 
         // Check that we aren't registering side effects with the same names
-        checkForDuplicates("sideEffect", namedSideEffects)
+        checkForDuplicates("sideEffect", namedSideEffects, registered.sideEffects)
 
         // Check the required calculations of these side-effects have already been registered
-        checkRequirements("Side effect", namedSideEffects, "requiresCalculations", "calculation")
+        // checkRequirements("Side effect", namedSideEffects, "requiresCalculations", "calculation")
 
         // Check the required side-effects of these side-effects have already been registered
-        checkRequirements("Side effect", namedSideEffects, "requiresSideEffects", "sideEffect")
+        // checkRequirements("Side effect", namedSideEffects, "requiresSideEffects", "sideEffect")
 
         Object.keys(namedSideEffects).forEach(name => {
           // Pass the side-effect through any hooks
           const sideEffect = hook("registerSideEffect", { name })(namedSideEffects[name])
           // Add it to the list
           sideEffects.push(sideEffect)
+          registered.sideEffects[name] = sideEffect
         })
-
-        // Register these side-effects
-        registerNames(namedSideEffects, "sideEffect")
       })
       return fluxlet
     },

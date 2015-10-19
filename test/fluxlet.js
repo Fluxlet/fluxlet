@@ -232,30 +232,6 @@ describe('Fluxlet', () => {
       expect(testCalcB).to.have.been.called
     })
 
-    it('will fail to register if a required calculation has not been registered', () => {
-      expect(() => {
-        given.calculations({
-          testCalcRequires: {
-            requiresCalculations: "missingCalc",
-            then: s => s
-          }
-        })
-      }).to.throw(Error, "Calculation 'testCalcRequires' requires the calculation 'missingCalc' in fluxlet:(anon)")
-    })
-
-    it('will register if a required calculation has been registered', () => {
-      given.calculations({ existingCalc: s => s })
-
-      given.calculations({
-        testCalcRequires: {
-          requiresCalculations: "existingCalc",
-          then: s => s
-        }
-      })
-
-      expect(calculations().length).to.equal(2)
-    })
-
     it('can not override existing calculations with the same name', () => {
       given.calculations({ existingCalc: s => s })
 
@@ -351,55 +327,6 @@ describe('Fluxlet', () => {
       when().doNothing()
 
       expect(testSideEffectC).not.to.have.been.called
-    })
-
-    it('will fail to register if a required calculation has not been registered', () => {
-      expect(() => {
-        given.sideEffects({
-          testSideEffectRequires: {
-            requiresCalculations: "missingCalc",
-            then: () => {}
-          }
-        })
-      }).to.throw(Error, "Side effect 'testSideEffectRequires' requires the calculation 'missingCalc' in fluxlet:(anon)")
-    })
-
-    it('will register if a required calculation has been registered', () => {
-      given.calculations({ existingCalc: s => s })
-
-      given.sideEffects({
-        testSideEffectRequires: {
-          requiresCalculations: "existingCalc",
-          then: () => {}
-        }
-      })
-
-      expect(calculations().length).to.equal(1)
-      expect(sideEffects().length).to.equal(1)
-    })
-
-    it('will fail to register if a required side effect has not been registered', () => {
-      expect(() => {
-        given.sideEffects({
-          testSideEffectRequires: {
-            requiresSideEffects: "missingSideEffect",
-            then: () => {}
-          }
-        })
-      }).to.throw(Error, "Side effect 'testSideEffectRequires' requires the sideEffect 'missingSideEffect' in fluxlet:(anon)")
-    })
-
-    it('will register if a required side effect has been registered', () => {
-      given.sideEffects({ existingSideEffect: () => {} })
-
-      given.sideEffects({
-        testSideEffectRequires: {
-          requiresSideEffects: "existingSideEffect",
-          then: () => {}
-        }
-      })
-
-      expect(sideEffects().length).to.equal(2)
     })
 
     it('can not override existing side effects with the same name', () => {
