@@ -300,9 +300,6 @@ function createFluxlet(id) {
         // Check that we aren't registering calculations with the same names
         checkForDuplicates("calculation", namedCalculations, registered.calculations)
 
-        // Check the required calculations of these calculations have already been registered
-        // checkRequirements("Calculation", namedCalculations, "requiresCalculations", "calculation")
-
         Object.keys(namedCalculations).forEach(name => {
           // Pass the calculation through any hooks
           const calculation = hook("registerCalculation", { name })(namedCalculations[name])
@@ -345,12 +342,6 @@ function createFluxlet(id) {
 
         // Check that we aren't registering side effects with the same names
         checkForDuplicates("sideEffect", namedSideEffects, registered.sideEffects)
-
-        // Check the required calculations of these side-effects have already been registered
-        // checkRequirements("Side effect", namedSideEffects, "requiresCalculations", "calculation")
-
-        // Check the required side-effects of these side-effects have already been registered
-        // checkRequirements("Side effect", namedSideEffects, "requiresSideEffects", "sideEffect")
 
         Object.keys(namedSideEffects).forEach(name => {
           // Pass the side-effect through any hooks
