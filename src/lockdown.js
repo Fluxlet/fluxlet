@@ -1,4 +1,18 @@
-
+// # Lockdown Hooks
+//
+// Prevent direct setting of state, and further registration of actions,
+// calculations or side-effects after the first dispatch.
+//
+// This is a fail fast mechanism to ensure unexpected behaviour cannot be
+// introduced into a running application.
+//
+// Usage:
+//
+//     import lockdown from "fluxlet/lockdown"
+//
+//     fluxlet()
+//       .hooks(lockdown)
+//
 export default {
   dispatch({ shared }) {
     shared.lockdown = true
