@@ -178,15 +178,6 @@ function createFluxlet(id) {
     }
   }
 
-  // Check that all components are either functions or objects with a 'then' function
-  function checkFunctions(type, obj) {
-    Object.keys(obj).forEach(name => {
-      if (typeof (obj[name].then || obj[name]) !== 'function') {
-        throw new TypeError(`${type} '${name}' must be a function, or an object containing a 'then' function`)
-      }
-    })
-  }
-
   const fluxlet = {
     // ## Register a hook
     //
@@ -245,9 +236,6 @@ function createFluxlet(id) {
     //
     actions(...namedActionsArgs) {
       namedActionsArgs.map(hook("registerActions")).forEach(namedActions => {
-        // Check all actions are functions or objects with a 'then' function
-        checkFunctions("Action", namedActions)
-
         Object.keys(namedActions).forEach(name => {
           const action = hook("registerAction", { name })(namedActions[name])
           registered.actions[name] = action
@@ -282,9 +270,6 @@ function createFluxlet(id) {
     //
     calculations(...namedCalculationsArgs) {
       namedCalculationsArgs.map(hook("registerCalculations")).forEach(namedCalculations => {
-        // Check all calculations are functions or objects with a 'then' function
-        checkFunctions("Calculation", namedCalculations)
-
         Object.keys(namedCalculations).forEach(name => {
           // Pass the calculation through any hooks
           const calculation = hook("registerCalculation", { name })(namedCalculations[name])
@@ -322,9 +307,6 @@ function createFluxlet(id) {
     //
     sideEffects(...namedSideEffectsArgs) {
       namedSideEffectsArgs.map(hook("registerSideEffects")).forEach(namedSideEffects => {
-        // Check all side-effects are functions or objects with a 'then' function
-        checkFunctions("Side effect", namedSideEffects)
-
         Object.keys(namedSideEffects).forEach(name => {
           // Pass the side-effect through any hooks
           const sideEffect = hook("registerSideEffect", { name })(namedSideEffects[name])
@@ -355,6 +337,13 @@ function createFluxlet(id) {
         delete fluxlets[id]
         id = undefined
       }
+    },
+
+    // Utility fns to check for the existence of a component by name
+    has: {
+      action: name => !!registered.actions[name],
+      calculation: name => !!registered.calculations[name],
+      sideEffect: name => !!registered.sideEffects[name]
     },
 
     // These tools are for testing and debugging on the console only, and should NEVER be called from code

@@ -143,12 +143,6 @@ describe('Fluxlet', () => {
 
     describe('conditional', () => {
 
-      it('without a then function will fail to register', () => {
-        expect(() => {
-          given.actions({ invalidAction: {} })
-        }).to.throw(TypeError, "Action 'invalidAction' must be a function, or an object containing a 'then' function")
-      })
-
       it('are dispatched when true', () => {
         const testC = {
           when: whenSpy(s => true),
@@ -244,12 +238,6 @@ describe('Fluxlet', () => {
 
     describe('as conditional', () => {
 
-      it('without a then function will fail to register', () => {
-        expect(() => {
-          given.calculations({ invalidCalc: {} })
-        }).to.throw(Error, "Calculation 'invalidCalc' must be a function, or an object containing a 'then' function")
-      })
-
       it('is called when true', () => {
         const testCalcC = {
           when: whenSpy(s => true),
@@ -332,12 +320,6 @@ describe('Fluxlet', () => {
     })
 
     describe('as conditional', () => {
-
-      it('without a then function will fail to register', () => {
-        expect(() => {
-          given.sideEffects({ invalidSideEffect: {} })
-        }).to.throw(Error, "Side effect 'invalidSideEffect' must be a function, or an object containing a 'then' function")
-      })
 
       it('is called when true', () => {
         const testSideEffectD = {
