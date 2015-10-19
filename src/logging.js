@@ -1,12 +1,28 @@
 /* global console */
 
+// # Logging Hooks
+//
+// Provides fluxlet hooks for logging in two distinct areas:
+//
+// * Registrations
+// * Dispatch lifecycle
+
+// Local reference to console, to allow it to be overridden with an alternative
+// implementation, eg with spies for testing
 let logger = console
-let collapsed = false
 
 export function setLogger(log) {
   logger = log
 }
 
+// Collapse dispatch groups by default if true
+let collapsed = false
+
+// ## Registration hooks
+//
+//     fluxlet()
+//       .hooks(log.registrations)
+//
 export const registrations = {
   registerState({ logId }) {
     return state => {
@@ -27,10 +43,15 @@ export const registrations = {
   }
 }
 
-let group = []
-
-const prefix = logId => group[group.length-1] === logId ? '' : `${logId} `
-
+// ## Dispatch lifecycle hooks
+//
+// Add hooks that log various aspects of the dispatch lifecycle
+//
+//     fluxlet()
+//       .hooks(log.dispatches)
+//       .hooks(log.calculations)
+//       .hooks(log.sideEffects)
+//
 export const dispatches = {
   dispatch({ logId, actionName, actionArgs, startState, enable }) {
     if (enable) {
@@ -74,3 +95,21 @@ export const sideEffects = {
     }
   }
 }
+
+let group = []
+
+const prefix = logId => group[group.length-1] === logId ? '' : `${logId} `
+
+// ## All hooks
+//
+// Add all hooks for convenience...
+//
+//     fluxlet()
+//       .hooks(...log.all)
+//
+export const all = [
+  registrations,
+  dispatches,
+  calculations,
+  sideEffects
+]
