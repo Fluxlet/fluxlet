@@ -121,14 +121,6 @@ describe('Fluxlet', () => {
       }).to.throw(Error, "Attempt to dispatch action 'testNest2' within action 'testNest1' in fluxlet:(anon)")
     })
 
-    it('can not override existing actions with the same name', () => {
-      given.actions({ existingAction: () => s => s })
-
-      expect(() => {
-        given.actions({ existingAction: () => s => s })
-      }).to.throw(Error, "Attempt to add an existing action 'existingAction' to fluxlet:(anon)")
-    })
-
     it('accepts multiple actions in an object', () => {
       given.actions({
         actionOne: () => s => s,
@@ -232,14 +224,6 @@ describe('Fluxlet', () => {
       expect(testCalcB).to.have.been.called
     })
 
-    it('can not override existing calculations with the same name', () => {
-      given.calculations({ existingCalc: s => s })
-
-      expect(() => {
-        given.calculations({ existingCalc: s => s })
-      }).to.throw(Error, "Attempt to add an existing calculation 'existingCalc' to fluxlet:(anon)")
-    })
-
     it('accepts multiple calculations in an object', () => {
       given.calculations({
         calcOne: s => s,
@@ -327,14 +311,6 @@ describe('Fluxlet', () => {
       when().doNothing()
 
       expect(testSideEffectC).not.to.have.been.called
-    })
-
-    it('can not override existing side effects with the same name', () => {
-      given.sideEffects({ existingSideEffect: () => {} })
-
-      expect(() => {
-        given.sideEffects({ existingSideEffect: () => {} })
-      }).to.throw(Error, "Attempt to add an existing sideEffect 'existingSideEffect' to fluxlet:(anon)")
     })
 
     it('accepts multiple side effects in an object', () => {

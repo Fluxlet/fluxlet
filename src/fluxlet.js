@@ -178,15 +178,6 @@ function createFluxlet(id) {
     }
   }
 
-  // Check that an action, calculation, or sideEffect hasn't already been registered
-  function checkForDuplicates(type, obj, register) {
-    Object.keys(obj).forEach(name => {
-      if (register[name]) {
-        throw new Error(`Attempt to add an existing ${type} '${name}' to ${logId}`)
-      }
-    })
-  }
-
   // Check that all components are either functions or objects with a 'then' function
   function checkFunctions(type, obj) {
     Object.keys(obj).forEach(name => {
@@ -257,9 +248,6 @@ function createFluxlet(id) {
         // Check all actions are functions or objects with a 'then' function
         checkFunctions("Action", namedActions)
 
-        // Check that we aren't registering actions with the same names
-        checkForDuplicates("action", namedActions, registered.actions)
-
         Object.keys(namedActions).forEach(name => {
           const action = hook("registerAction", { name })(namedActions[name])
           registered.actions[name] = action
@@ -296,9 +284,6 @@ function createFluxlet(id) {
       namedCalculationsArgs.map(hook("registerCalculations")).forEach(namedCalculations => {
         // Check all calculations are functions or objects with a 'then' function
         checkFunctions("Calculation", namedCalculations)
-
-        // Check that we aren't registering calculations with the same names
-        checkForDuplicates("calculation", namedCalculations, registered.calculations)
 
         Object.keys(namedCalculations).forEach(name => {
           // Pass the calculation through any hooks
@@ -339,9 +324,6 @@ function createFluxlet(id) {
       namedSideEffectsArgs.map(hook("registerSideEffects")).forEach(namedSideEffects => {
         // Check all side-effects are functions or objects with a 'then' function
         checkFunctions("Side effect", namedSideEffects)
-
-        // Check that we aren't registering side effects with the same names
-        checkForDuplicates("sideEffect", namedSideEffects, registered.sideEffects)
 
         Object.keys(namedSideEffects).forEach(name => {
           // Pass the side-effect through any hooks
