@@ -56,9 +56,7 @@ function createFluxlet(id) {
   }
 
   // Shared data for use by hooks
-  const shared = {
-    registered
-  }
+  const shared = {}
 
   // Handy string for use in log and error messages
   const logId = `fluxlet:${id||'(anon)'}`
@@ -347,6 +345,7 @@ function createFluxlet(id) {
     },
 
     // These tools are for testing and debugging on the console only, and should NEVER be called from code
+    // TODO: Remove these from the core, and find a way to plugin internal access
     debug: {
       id: () => id,
       state: () => lockedState,

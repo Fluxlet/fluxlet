@@ -49,32 +49,32 @@
 //       })
 //
 export default {
-  registerCalculations({ logId, shared:{registered:{ calculations }}}) {
+  registerCalculations({ logId, fluxlet }) {
     return (namedCalculations) => {
       // Check the required calculations of these calculations have already been registered
-      checkRequirements("requiresCalculations", namedCalculations, calculations,
+      checkRequirements("requiresCalculations", namedCalculations, fluxlet.has.calculation,
         (name, reqd) => `Calculation '${name}' requires the calculation '${reqd}' in ${logId}`)
     }
   },
 
-  registerSideEffects({ logId, shared:{registered:{ calculations, sideEffects }}}) {
+  registerSideEffects({ logId, fluxlet }) {
     return (namedSideEffects) => {
       // Check the required calculations of these side-effects have already been registered
-      checkRequirements("requiresCalculations", namedSideEffects, calculations,
+      checkRequirements("requiresCalculations", namedSideEffects, fluxlet.has.calculation,
         (name, reqd) => `Side effect '${name}' requires the calculation '${reqd}' in ${logId}`)
 
       // Check the required side-effects of these side-effects have already been registered
-      checkRequirements("requiresSideEffects", namedSideEffects, sideEffects,
+      checkRequirements("requiresSideEffects", namedSideEffects, fluxlet.has.sideEffect,
         (name, reqd) => `Side effect '${name}' requires the side-effect '${reqd}' in ${logId}`)
     }
   }
 }
 
 // Check that the required calculations or sideEffects have already been registered
-function checkRequirements(requiresProp, named, register, msg) {
+function checkRequirements(requiresProp, named, has, msg) {
   Object.keys(named).forEach(name => {
     asArray(named[name][requiresProp]).forEach(requirement => {
-      if (!register[requirement]) {
+      if (!has(requirement)) {
         throw new Error(msg(name, requirement))
       }
     })

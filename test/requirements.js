@@ -10,8 +10,6 @@ describe('requirements', () => {
   let given
 
   const when = () => given.debug.dispatchers()
-  const calculations = () => given.debug.calculations()
-  const sideEffects = () => given.debug.sideEffects()
 
   beforeEach(() => {
     given = fluxlet()
@@ -40,7 +38,8 @@ describe('requirements', () => {
       }
     })
 
-    expect(calculations().length).to.equal(2)
+    expect(given.has.calculation("existingCalc")).to.be.true
+    expect(given.has.calculation("testCalcRequires")).to.be.true
   })
 
   it('does not recognise required calculations in the same registration object', () => {
@@ -76,8 +75,8 @@ describe('requirements', () => {
       }
     })
 
-    expect(calculations().length).to.equal(1)
-    expect(sideEffects().length).to.equal(1)
+    expect(given.has.calculation("existingCalc")).to.be.true
+    expect(given.has.sideEffect("testSideEffectRequires")).to.be.true
   })
 
   it('prevents a side-effect from being registered if a required side effect has not been registered', () => {
@@ -101,7 +100,8 @@ describe('requirements', () => {
       }
     })
 
-    expect(sideEffects().length).to.equal(2)
+    expect(given.has.sideEffect("existingSideEffect")).to.be.true
+    expect(given.has.sideEffect("testSideEffectRequires")).to.be.true
   })
 
   it('does not recognise required side effects in the same registration object', () => {

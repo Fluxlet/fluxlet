@@ -23,8 +23,7 @@ describe('Fluxlet', () => {
 
   let given
 
-  const dispatchers = () => given.debug.dispatchers()
-  const when = dispatchers
+  const when = () => given.debug.dispatchers()
 
   beforeEach(() => {
     given = fluxlet()

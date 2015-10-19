@@ -52,10 +52,10 @@ describe('Fluxlet', () => {
 
   let given
 
+  const when = () => given.debug.dispatchers()
   const dispatchers = () => given.debug.dispatchers()
   const calculations = () => given.debug.calculations()
   const sideEffects = () => given.debug.sideEffects()
-  const when = dispatchers
   const state = () => given.debug.state()
 
   beforeEach(() => {
