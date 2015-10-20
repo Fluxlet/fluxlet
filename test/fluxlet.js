@@ -1,6 +1,7 @@
 /*eslint-env mocha */
 /*eslint-disable no-unused-vars */
 import fluxlet from 'src/fluxlet'
+import { gather, expose } from 'src/backdoor'
 
 import chai, { expect } from 'chai'
 import sinon, { match } from 'sinon'
@@ -24,12 +25,12 @@ describe('Fluxlet', () => {
 
   it('can be created without an id', () => {
     const f = fluxlet()
-    expect(f.debug.id()).to.be.undefined
+    expect(f.id()).to.be.undefined
   })
 
   it('can be created with an id', () => {
     const f = fluxlet("flux-name")
-    expect(f.debug.id()).to.equal("flux-name")
+    expect(f.id()).to.equal("flux-name")
   })
 
   it('can retrieve an existing instance by id', () => {
@@ -44,22 +45,19 @@ describe('Fluxlet', () => {
     const n = fluxlet("removed-fluxlet")
 
     expect(n).not.to.equal(f)
-    expect(f.debug.id()).to.be.undefined
+    expect(f.id()).to.be.undefined
   })
 })
 
 describe('Fluxlet', () => {
 
   let given
-
-  const when = () => given.debug.dispatchers()
-  const dispatchers = () => given.debug.dispatchers()
-  const calculations = () => given.debug.calculations()
-  const sideEffects = () => given.debug.sideEffects()
-  const state = () => given.debug.state()
+  const when = () => expose(given).dispatcher
+  const state = () => expose(given).initialState
 
   beforeEach(() => {
     given = fluxlet()
+      .hooks(gather)
   })
 
   describe('state', () => {
@@ -100,7 +98,8 @@ describe('Fluxlet', () => {
 
     it('are wrapped with a dispatcher', () => {
       given.actions({ testA: () => s => s })
-      expect(dispatchers().testA).to.be.defined
+
+      expect(given.has.action('testA')).to.be.true
     })
 
     it('are dispatched', () => {
@@ -127,8 +126,8 @@ describe('Fluxlet', () => {
         actionTwo: () => s => s
       })
 
-      expect(dispatchers().actionOne).to.be.defined
-      expect(dispatchers().actionTwo).to.be.defined
+      expect(given.has.action('actionOne')).to.be.true
+      expect(given.has.action('actionTwo')).to.be.true
     })
 
     it('accepts actions in multiple arguments', () => {
@@ -137,8 +136,8 @@ describe('Fluxlet', () => {
         { actionTwo: () => s => s }
       )
 
-      expect(dispatchers().actionOne).to.be.defined
-      expect(dispatchers().actionTwo).to.be.defined
+      expect(given.has.action('actionOne')).to.be.true
+      expect(given.has.action('actionTwo')).to.be.true
     })
 
     describe('conditional', () => {
@@ -205,7 +204,7 @@ describe('Fluxlet', () => {
 
     it('can be a plain function', () => {
       given.calculations({ testCalcA: s => s })
-      expect(calculations().length).to.equal(1)
+      expect(given.has.calculation('testCalcA')).to.be.true
     })
 
     it('is called within any action dispatch', () => {
@@ -224,7 +223,8 @@ describe('Fluxlet', () => {
         calcTwo: s => s
       })
 
-      expect(calculations().length).to.equal(2)
+      expect(given.has.calculation('calcOne')).to.be.true
+      expect(given.has.calculation('calcTwo')).to.be.true
     })
 
     it('accepts calculations in multiple arguments', () => {
@@ -233,7 +233,8 @@ describe('Fluxlet', () => {
         { calcTwo: s => s }
       )
 
-      expect(calculations().length).to.equal(2)
+      expect(given.has.calculation('calcOne')).to.be.true
+      expect(given.has.calculation('calcTwo')).to.be.true
     })
 
     describe('as conditional', () => {
@@ -278,7 +279,8 @@ describe('Fluxlet', () => {
 
     it('can be a plain function', () => {
       given.sideEffects({ testSideEffectA: () => {} })
-      expect(sideEffects().length).to.equal(1)
+
+      expect(given.has.sideEffect('testSideEffectA')).to.be.true
     })
 
     it('is called after an action that changes state', () => {
@@ -307,7 +309,8 @@ describe('Fluxlet', () => {
         sideEffectTwo: s => {}
       })
 
-      expect(sideEffects().length).to.equal(2)
+      expect(given.has.sideEffect('sideEffectOne')).to.be.true
+      expect(given.has.sideEffect('sideEffectTwo')).to.be.true
     })
 
     it('accepts side effects in multiple arguments', () => {
@@ -316,7 +319,8 @@ describe('Fluxlet', () => {
         { sideEffectTwo: s => {} }
       )
 
-      expect(sideEffects().length).to.equal(2)
+      expect(given.has.sideEffect('sideEffectOne')).to.be.true
+      expect(given.has.sideEffect('sideEffectTwo')).to.be.true
     })
 
     describe('as conditional', () => {
@@ -366,22 +370,6 @@ describe('Fluxlet', () => {
       expect(f).to.have.been.calledWith({
         action1: match.any,
         action2: match.any
-      })
-    })
-  })
-
-  describe('debug', () => {
-
-    describe('dispatching', () => {
-      it('returns the name of the currently dispatching action', () => {
-        given.actions({
-          anAction: () => s => {
-            expect(given.debug.dispatching()).to.equal("anAction")
-            return s
-          }
-        })
-
-        when().anAction()
       })
     })
   })

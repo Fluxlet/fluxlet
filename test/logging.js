@@ -2,6 +2,7 @@
 /*eslint-disable no-unused-vars */
 
 import fluxlet from 'src/fluxlet'
+import { gather, expose } from 'src/backdoor'
 import * as log from 'src/logging'
 
 import chai, { expect } from 'chai'
@@ -21,10 +22,11 @@ describe('Fluxlet', () => {
 
   let given
 
-  const when = () => given.debug.dispatchers()
+  const when = () => expose(given).dispatcher
 
   beforeEach(() => {
     given = fluxlet()
+      .hooks(gather)
   })
 
   describe('log', () => {

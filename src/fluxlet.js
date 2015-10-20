@@ -1,9 +1,14 @@
+import createRegister from "./register"
+
 // # Fluxlet
 
 // Fluxlet uses a fluent API to construct an instance, a fluxlet can be named or annonymous.
 
 // Internal map of named fluxlets
 const fluxlets = {}
+
+// Next internal fluxlet identifier
+let nextUID = 0
 
 // ## Factory
 //
@@ -30,6 +35,8 @@ export default function(id) {
 //
 function createFluxlet(id) {
 
+  const uid = nextUID++
+
   // The state of the fluxlet between dispatches
   let lockedState = undefined
 
@@ -43,17 +50,10 @@ function createFluxlet(id) {
   const dispatchers = {}
 
   // The list of state calculation functions
-  const calculations = []
+  const calculations = createRegister()
 
   // The list of side effect functions
-  const sideEffects = []
-
-  // All registered actions, calculations and sideEffects, for use by hooks
-  const registered = {
-    actions: {},
-    calculations: {},
-    sideEffects: {}
-  }
+  const sideEffects = createRegister()
 
   // Shared data for use by hooks
   const shared = {}
@@ -63,10 +63,14 @@ function createFluxlet(id) {
 
   // Call a hook
   function hook(name, params = {}) {
-    // Add common params
-    params.logId = logId
-    params.fluxlet = fluxlet
-    params.shared = shared
+    if (hooks[name]) {
+      // Add common params
+      params.uid = uid
+      params.id = id
+      params.logId = logId
+      params.fluxlet = fluxlet
+      params.shared = shared
+    }
 
     const postHooks = hooks[name] && hooks[name].map(preHook => preHook(params))
 
@@ -176,6 +180,10 @@ function createFluxlet(id) {
     }
   }
 
+  const forNamed = iteratee => named => {
+    Object.keys(named).forEach(name => iteratee(named[name], name))
+  }
+
   const fluxlet = {
     // ## Register a hook
     //
@@ -201,11 +209,9 @@ function createFluxlet(id) {
     // hooks can be registered, or refer to the fluxlet.d.ts file.
     //
     hooks(...namedHooksArgs) {
-      namedHooksArgs.forEach(namedHooks => {
-        Object.keys(namedHooks).forEach(name => {
-          (hooks[name] = hooks[name] || []).push(namedHooks[name])
-        })
-      })
+      namedHooksArgs.forEach(forNamed((hook, name) => {
+        (hooks[name] = hooks[name] || []).push(hook)
+      }))
       return fluxlet
     },
 
@@ -233,14 +239,12 @@ function createFluxlet(id) {
     //     }
     //
     actions(...namedActionsArgs) {
-      namedActionsArgs.map(hook("registerActions")).forEach(namedActions => {
-        Object.keys(namedActions).forEach(name => {
-          const action = hook("registerAction", { name })(namedActions[name])
-          registered.actions[name] = action
-          const dispatcher = createDispatcher(name, action)
-          dispatchers[name] = hook("registerDispatcher", { name })(dispatcher)
-        })
-      })
+      namedActionsArgs.map(hook("registerActions")).forEach(forNamed((action, name) => {
+        // Pass the action thru any hooks, and create a dispatcher for it
+        const dispatcher = createDispatcher(name, hook("registerAction", { name })(action))
+        // Pass the dispatcher thru any hooks, and register it
+        dispatchers[name] = hook("registerDispatcher", { name })(dispatcher)
+      }))
       return fluxlet
     },
 
@@ -267,15 +271,10 @@ function createFluxlet(id) {
     // if any of the calculations have not already been registered an error will be thrown.
     //
     calculations(...namedCalculationsArgs) {
-      namedCalculationsArgs.map(hook("registerCalculations")).forEach(namedCalculations => {
-        Object.keys(namedCalculations).forEach(name => {
-          // Pass the calculation through any hooks
-          const calculation = hook("registerCalculation", { name })(namedCalculations[name])
-          // Add it to the list
-          calculations.push(calculation)
-          registered.calculations[name] = calculation
-        })
-      })
+      namedCalculationsArgs.map(hook("registerCalculations")).forEach(forNamed((calculation, name) => {
+        // Pass the calculation through any hooks and register it
+        calculations.set(name, hook("registerCalculation", { name })(calculation))
+      }))
       return fluxlet
     },
 
@@ -304,15 +303,10 @@ function createFluxlet(id) {
     // on which this side-effect depends, if any of them have not already been registered an error will be thrown.
     //
     sideEffects(...namedSideEffectsArgs) {
-      namedSideEffectsArgs.map(hook("registerSideEffects")).forEach(namedSideEffects => {
-        Object.keys(namedSideEffects).forEach(name => {
-          // Pass the side-effect through any hooks
-          const sideEffect = hook("registerSideEffect", { name })(namedSideEffects[name])
-          // Add it to the list
-          sideEffects.push(sideEffect)
-          registered.sideEffects[name] = sideEffect
-        })
-      })
+      namedSideEffectsArgs.map(hook("registerSideEffects")).forEach(forNamed((sideEffect, name) => {
+        // Pass the side-effect through any hooks and register it
+        sideEffects.set(name, hook("registerSideEffect", { name })(sideEffect))
+      }))
       return fluxlet
     },
 
@@ -331,28 +325,29 @@ function createFluxlet(id) {
 
     // Remove a named fluxlet from the internal map of fluxlets and anonymise it
     remove() {
+      const postHook = hook("remove")
       if (id) {
         delete fluxlets[id]
         id = undefined
       }
+      postHook()
+    },
+
+    // Return the id of this fluxlet, given a creation time, may be undefined
+    id() {
+      return id
+    },
+
+    // Return the opaque internal unique identifier of this fluxlet
+    uid() {
+      return uid
     },
 
     // Utility fns to check for the existence of a component by name
     has: {
-      action: name => !!registered.actions[name],
-      calculation: name => !!registered.calculations[name],
-      sideEffect: name => !!registered.sideEffects[name]
-    },
-
-    // These tools are for testing and debugging on the console only, and should NEVER be called from code
-    // TODO: Remove these from the core, and find a way to plugin internal access
-    debug: {
-      id: () => id,
-      state: () => lockedState,
-      dispatching: () => dispatching,
-      dispatchers: () => dispatchers,
-      calculations: () => calculations,
-      sideEffects: () => sideEffects
+      action: name => !!dispatchers[name],
+      calculation: name => calculations.has(name),
+      sideEffect: name => sideEffects.has(name)
     }
   }
 

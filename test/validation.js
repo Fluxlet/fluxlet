@@ -2,6 +2,7 @@
 /*eslint-disable no-unused-vars */
 
 import fluxlet from 'src/fluxlet'
+import { gather, expose } from 'src/backdoor'
 import validation from 'src/validation'
 
 import chai, { expect } from 'chai'
@@ -23,10 +24,11 @@ describe('Fluxlet', () => {
 
   let given
 
-  const when = () => given.debug.dispatchers()
+  const when = () => expose(given).dispatcher
 
   beforeEach(() => {
     given = fluxlet()
+      .hooks(gather)
   })
 
   describe('validator', () => {

@@ -1,6 +1,7 @@
 /*eslint-env mocha */
 /*eslint-disable no-unused-vars */
 import fluxlet from 'src/fluxlet'
+import { gather, expose } from 'src/backdoor'
 import lockdown from 'src/lockdown'
 
 import { expect } from 'chai'
@@ -8,12 +9,12 @@ import { expect } from 'chai'
 describe('lockdown', () => {
 
   let given
-
-  const when = () => given.debug.dispatchers()
+  const when = () => expose(given).dispatcher
 
   beforeEach(() => {
     given = fluxlet()
       .hooks(lockdown)
+      .hooks(gather)
       .actions({ anyAction: () => s => s })
   })
 
