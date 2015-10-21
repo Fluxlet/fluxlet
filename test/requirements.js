@@ -42,6 +42,21 @@ describe('requirements', () => {
     expect(given.has.calculation("testCalcRequires")).to.be.true
   })
 
+  it('allows a calculation to be registered if a required calculation has been registered in a previous arg', () => {
+    given.calculations(
+      { existingCalc: s => s },
+      {
+        testCalcRequires: {
+          requiresCalculations: "existingCalc",
+          then: s => s
+        }
+      }
+    )
+
+    expect(given.has.calculation("existingCalc")).to.be.true
+    expect(given.has.calculation("testCalcRequires")).to.be.true
+  })
+
   it('does not recognise required calculations in the same registration object', () => {
     expect(() => {
       given.calculations({
@@ -99,6 +114,35 @@ describe('requirements', () => {
         then: () => {}
       }
     })
+
+    expect(given.has.sideEffect("existingSideEffect")).to.be.true
+    expect(given.has.sideEffect("testSideEffectRequires")).to.be.true
+  })
+  it('allows a side-effect to be registered if a required side effect has been registered', () => {
+    given.sideEffects({ existingSideEffect: () => {} })
+
+    given.sideEffects({
+      testSideEffectRequires: {
+        requiresSideEffects: "existingSideEffect",
+        then: () => {}
+      }
+    })
+
+    expect(given.has.sideEffect("existingSideEffect")).to.be.true
+    expect(given.has.sideEffect("testSideEffectRequires")).to.be.true
+  })
+
+  it('allows a side-effect to be registered if a required side effect has been registered in a previous arg', () => {
+    given.sideEffects()
+
+    given.sideEffects(
+      { existingSideEffect: () => {} },
+      {
+        testSideEffectRequires: {
+          requiresSideEffects: "existingSideEffect",
+          then: () => {}
+        }
+      })
 
     expect(given.has.sideEffect("existingSideEffect")).to.be.true
     expect(given.has.sideEffect("testSideEffectRequires")).to.be.true

@@ -24,6 +24,10 @@ let collapsed = false
 //       .hooks(log.registrations)
 //
 export const registrations = {
+  registerHook({ logId, name }) {
+    logger.log(`${logId} register hook ${name}`)
+  },
+
   registerState({ logId }) {
     return state => {
       logger.log(`${logId} initial state`, state)
@@ -73,26 +77,14 @@ export const dispatches = {
 }
 
 export const calculations = {
-  calculation({ logId, calculation, enable }) {
-    enable && logger.log(`${prefix(logId)}calculation ${calculation._fluxlet_log_name}`)
-  },
-
-  registerCalculation({ name }) {
-    return calculation => {
-      calculation._fluxlet_log_name = name
-    }
+  calculation({ logId, name, enable }) {
+    enable && logger.log(`${prefix(logId)}calculation ${name}`)
   }
 }
 
 export const sideEffects = {
-  sideEffect({ logId, sideEffect, enable }) {
-    enable && logger.log(`${prefix(logId)}sideEffect ${sideEffect._fluxlet_log_name}`)
-  },
-
-  registerSideEffect({ name }) {
-    return sideEffect => {
-      sideEffect._fluxlet_log_name = name
-    }
+  sideEffect({ logId, name, enable }) {
+    enable && logger.log(`${prefix(logId)}sideEffect ${name}`)
   }
 }
 

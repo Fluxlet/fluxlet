@@ -127,14 +127,14 @@ function createFluxlet(id) {
           const postCalculations = hook("calculations", { actionName, startState, transientState })
 
           // Chain calculation calls
-          calculations.forEach(calculation => {
+          calculations.forEach((calculation, name) => {
             const priorState = transientState
 
             // Test the calculation condition to determine whether the calculation should be called
             const enable = calculation.when ? calculation.when(priorState, startState) : true
 
             // Call the individual calculation hook
-            const postCalculation = hook("calculation", { actionName, calculation, startState, priorState, enable })
+            const postCalculation = hook("calculation", { actionName, name, calculation, startState, priorState, enable })
 
             // Call the actual calculation, passing the state return from the previous,
             // the starting state prior to the action is also given.
@@ -153,13 +153,13 @@ function createFluxlet(id) {
             const postSideEffects = hook("sideEffects", { actionName, lockedState })
 
             // Call side-effects only if state has changed
-            sideEffects.forEach(sideEffect => {
+            sideEffects.forEach((sideEffect, name) => {
 
               // Test the side-effect condition to determine whether the side-effect should be called
               const enable = sideEffect.when ? sideEffect.when(lockedState, startState) : true
 
               // Call the individual side-effect hook
-              const postSideEffect = hook("sideEffect", { actionName, sideEffect, startState, lockedState, dispatchers, enable })
+              const postSideEffect = hook("sideEffect", { actionName, name, sideEffect, startState, lockedState, dispatchers, enable })
 
               // Call the actual side-effect, passing the new state, original state, and all action dispatchers
               // Passing any return values from the side-effects to any post-side-effect hooks
@@ -180,8 +180,20 @@ function createFluxlet(id) {
     }
   }
 
-  const forNamed = iteratee => named => {
-    Object.keys(named).forEach(name => iteratee(named[name], name))
+  // forEach over the key/value entries of an object
+  const forEachEntry = (iteratee, dict) => {
+    Object.keys(dict).forEach(name => iteratee(dict[name], name))
+  }
+
+  // Create a registration fn, that calls the named hook and then for each arg
+  // it passes the object of named components thru the post-hook and then
+  // iterates over each entry calling the iteratee
+  const registration = (hookName, iteratee) => (...args) => {
+    const postHook = hook(hookName)
+
+    args.forEach(dict => forEachEntry(iteratee, postHook(dict)))
+
+    return fluxlet
   }
 
   const fluxlet = {
@@ -208,12 +220,9 @@ function createFluxlet(id) {
     // Look for calls to the *hook* function throughout this code to see what
     // hooks can be registered, or refer to the fluxlet.d.ts file.
     //
-    hooks(...namedHooksArgs) {
-      namedHooksArgs.forEach(forNamed((hook, name) => {
-        (hooks[name] = hooks[name] || []).push(hook)
-      }))
-      return fluxlet
-    },
+    hooks: registration("registerHooks", (hookFn, name) => {
+      (hooks[name] = hooks[name] || []).push(hook("registerHook", { name })(hookFn))
+    }),
 
     // Set (or modify) the initial state of the fluxlet
     state(state) {
@@ -238,15 +247,12 @@ function createFluxlet(id) {
     //       then: (...args) -> (state) -> state
     //     }
     //
-    actions(...namedActionsArgs) {
-      namedActionsArgs.map(hook("registerActions")).forEach(forNamed((action, name) => {
-        // Pass the action thru any hooks, and create a dispatcher for it
-        const dispatcher = createDispatcher(name, hook("registerAction", { name })(action))
-        // Pass the dispatcher thru any hooks, and register it
-        dispatchers[name] = hook("registerDispatcher", { name })(dispatcher)
-      }))
-      return fluxlet
-    },
+    actions: registration("registerActions", (action, name) => {
+      // Pass the action thru any hooks, and create a dispatcher for it
+      const dispatcher = createDispatcher(name, hook("registerAction", { name })(action))
+      // Pass the dispatcher thru any hooks, and register it
+      dispatchers[name] = hook("registerDispatcher", { name })(dispatcher)
+    }),
 
     // Add named calculations to the fluxlet. Calculations are chained, the first is given the state
     // from the action, and then return value is passed into the next calculation, and so on.
@@ -270,13 +276,10 @@ function createFluxlet(id) {
     // The 'requiresCalculations' is an optional set of calculation names on which this calculation depends,
     // if any of the calculations have not already been registered an error will be thrown.
     //
-    calculations(...namedCalculationsArgs) {
-      namedCalculationsArgs.map(hook("registerCalculations")).forEach(forNamed((calculation, name) => {
-        // Pass the calculation through any hooks and register it
-        calculations.set(name, hook("registerCalculation", { name })(calculation))
-      }))
-      return fluxlet
-    },
+    calculations: registration("registerCalculations", (calculation, name) => {
+      // Pass the calculation through any hooks and register it
+      calculations.set(name, hook("registerCalculation", { name })(calculation))
+    }),
 
     // Add named side-effects to the fluxlet. All side-effects receive the same final state that
     // resulted from the action and calculation chain, along with the original state and the map
@@ -302,13 +305,10 @@ function createFluxlet(id) {
     // The 'requiresCalculations' and 'requiresSideEffects' are optional sets of calculation and side-effect names
     // on which this side-effect depends, if any of them have not already been registered an error will be thrown.
     //
-    sideEffects(...namedSideEffectsArgs) {
-      namedSideEffectsArgs.map(hook("registerSideEffects")).forEach(forNamed((sideEffect, name) => {
-        // Pass the side-effect through any hooks and register it
-        sideEffects.set(name, hook("registerSideEffect", { name })(sideEffect))
-      }))
-      return fluxlet
-    },
+    sideEffects: registration("registerSideEffects", (sideEffect, name) => {
+      // Pass the side-effect through any hooks and register it
+      sideEffects.set(name, hook("registerSideEffect", { name })(sideEffect))
+    }),
 
     // Call a initialisation function with the map of action dispatchers.
     //
