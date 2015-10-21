@@ -9,12 +9,12 @@
 //       .actions(...)
 //
 
-import fluxlet from "fluxlet"
-import { all as logAll } from "fluxlet/logging"
-import lockdown from "fluxlet/lockdown"
-import validateRegistrations from "fluxlet/validate-registrations"
-import dedupe from "fluxlet/dedupe"
-import requirements from "fluxlet/requirements"
+import fluxlet from "./fluxlet"
+import { all as logAll } from "./logging"
+import lockdown from "./lockdown"
+import validateRegistrations from "./validate-registrations"
+import dedupe from "./dedupe"
+import requirements from "./requirements"
 
 export default function(...args) {
   return fluxlet(...args)
