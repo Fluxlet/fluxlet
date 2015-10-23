@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="description" content="Fluxlet : A micro-framework for managing state within your application">
+
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+
+    <title>Fluxlet</title>
+  </head>
+
+  <body>
+
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/Fluxlet/fluxlet">View on GitHub</a>
+
+          <h1 id="project_title">Fluxlet</h1>
+          <h2 id="project_tagline">A micro-framework for managing state within your application</h2>
+
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/Fluxlet/fluxlet/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/Fluxlet/fluxlet/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+        <p><a href="https://travis-ci.org/Fluxlet/fluxlet"><img src="https://travis-ci.org/Fluxlet/fluxlet.svg?branch=master" alt="Build Status"></a>
+<a href="https://www.npmjs.com/package/fluxlet"><img src="https://img.shields.io/npm/v/fluxlet.svg" alt="npm version"></a>
+<a href="https://david-dm.org/fluxlet/fluxlet"><img src="https://david-dm.org/fluxlet/fluxlet.svg" alt="Dependency Status"></a>
+<a href="https://david-dm.org/fluxlet/fluxlet#info=devDependencies"><img src="https://david-dm.org/fluxlet/fluxlet/dev-status.svg" alt="devDependency Status"></a>
+<a href="https://codeclimate.com/github/Fluxlet/fluxlet"><img src="https://codeclimate.com/github/Fluxlet/fluxlet/badges/gpa.svg" alt="Code Climate"></a>
+<a href="LICENSE"><img src="https://img.shields.io/github/license/fluxlet/fluxlet.svg" alt="License"></a></p>
+
+<h1>
+<a id="fluxlet" class="anchor" href="#fluxlet" aria-hidden="true"><span class="octicon octicon-link"></span></a>Fluxlet</h1>
+
+<p>Fluxlet is a micro-framework for managing state within your application.</p>
+
+<p>Its focus is on the predictable uni-directional flow of immutable data within
+a single round of the event loop.</p>
+
+<h2>
+<a id="overview" class="anchor" href="#overview" aria-hidden="true"><span class="octicon octicon-link"></span></a>Overview</h2>
+
+<p>Data comes in from an event, an <strong>action</strong> is dispatched which updates the
+state, which can then flow through a series of <strong>calculations</strong> which perform
+further updates of the state, and finally into a bunch of <strong>side-effects</strong>
+which do stuff with the resulting state.</p>
+
+<p>This diagram illustrates the flow of data through a Fluxlet...</p>
+
+<p><img src="fluxlet-data-flow.png" alt="Fluxlet data flow"></p>
+
+<p>The lines represent the actual flow of data, green is data from the event,
+and red is the state. The shaded rectangles are functions.</p>
+
+<h2>
+<a id="why" class="anchor" href="#why" aria-hidden="true"><span class="octicon octicon-link"></span></a>Why?</h2>
+
+<p>The whole point of this is that from any action dispatch (knowing the payload
+and starting state), you should be able to reason about (and reliably test)
+the end state, and know exactly what side-effects should be performed. You
+should be able to reason about the exact state of your application and what
+async tasks it's performing at any time.</p>
+
+<h2>
+<a id="the-component-functions" class="anchor" href="#the-component-functions" aria-hidden="true"><span class="octicon octicon-link"></span></a>The Component Functions</h2>
+
+<p>An <strong>action</strong> is a pure function that takes a payload and a state and returns
+a new state.</p>
+
+<p><em>I lied a little, an action function actually takes the payload and returns
+another function that takes the state, the reasons for this become clear when
+you create actions using immutable state update functions.</em></p>
+
+<p>The new state from the action is passed into a chain of <strong>calculations</strong>,
+which are also pure functions that take state and return new state.</p>
+
+<p>The state from the last calculation is then passed into all of the
+<strong>side-effects</strong>, which are functions that take the state and do stuff,
+eg. render to DOM, make requests, but they can't directly affect the state.</p>
+
+<p>For the sake of clarity, there is some detail missing from the diagram above:
+The initial state is also passed to every calculation and side-effect so that
+they can compare the current state to the previous state to determine if they
+actually need to do anything. This previous state should be used simply for
+comparison purposes.</p>
+
+<p>An overview of the component function signatures:</p>
+
+<ul>
+<li>
+<strong>action</strong>: (...payload) -&gt; (initial-state) -&gt; transient-state</li>
+<li>
+<strong>calculation</strong>: (transient-state, initial-state) -&gt; transient-state</li>
+<li>
+<strong>side effect</strong>: (final-state, initial-state, dispatchers) -&gt; void</li>
+</ul>
+
+<p><em>The state from the final calculation in the chain (or the action if no
+calculations are called) becomes the final state</em></p>
+
+<p>You explicitly register these component functions with a Fluxlet using its
+fluent API at construction time.</p>
+
+<h2>
+<a id="dispatchers" class="anchor" href="#dispatchers" aria-hidden="true"><span class="octicon octicon-link"></span></a>Dispatchers</h2>
+
+<p>Fluxlet creates a separate <strong>dispatcher</strong> function for every action, but they
+all call a shared set of calculations and side-effects.</p>
+
+<p>It's these dispatcher functions that are called from async event handlers, or
+other fluxlets.</p>
+
+<h2>
+<a id="one-big-immutable-state" class="anchor" href="#one-big-immutable-state" aria-hidden="true"><span class="octicon octicon-link"></span></a>One Big Immutable State</h2>
+
+<p>State within a Fluxlet is a single immutable JS object, the state must NEVER
+be modified by a component function. <strong>Actions</strong> and <strong>calculations</strong> must
+either return the same unmodified state or a new version of the state.</p>
+
+<p><em>TODO: Could do with a reference to how immutable data structures work here</em></p>
+
+<h2>
+<a id="the-rules" class="anchor" href="#the-rules" aria-hidden="true"><span class="octicon octicon-link"></span></a>The Rules</h2>
+
+<p><strong>Action</strong> and <strong>calculation</strong> functions must be <em>pure referentially
+transparent</em> functions, that is, they can use data given to them and should
+return a consistent state from the data passed in - they MUST NEVER use data
+from elsewhere or perform any side-effects.</p>
+
+<p><strong>Side-effects</strong> on the other hand, as the name suggests can perform
+side-effects, but they can not alter state or directly dispatch another action.
+They can however call an action dispatcher from within an async event
+handler, eg. timeout, ajax callback.</p>
+
+<p>A <strong>side-effect</strong> should do as little as possible, delegating any data
+processing to a <strong>calculation</strong> wherever possible. It should also source any
+transient data from the state and not directly from the DOM, ie. form values
+should be fed into the state via an action. Keeping the state as the
+authoritative state of the application at any time. Although it may check the
+DOM to determine whether it needs to update it or not.</p>
+
+<h2>
+<a id="example" class="anchor" href="#example" aria-hidden="true"><span class="octicon octicon-link"></span></a>Example</h2>
+
+<div class="highlight highlight-source-js"><pre><span class="pl-k">import</span> <span class="pl-smi">fluxlet</span> <span class="pl-k">from</span> <span class="pl-s"><span class="pl-pds">"</span>fluxlet<span class="pl-pds">"</span></span>
+<span class="pl-k">import</span> { <span class="pl-smi">update</span> } <span class="pl-k">from</span> <span class="pl-s"><span class="pl-pds">"</span>fluxlet-immutable/update<span class="pl-pds">"</span></span>
+
+<span class="pl-k">export</span> <span class="pl-v">default</span> <span class="pl-k">function</span>() {
+  fluxlet(<span class="pl-s"><span class="pl-pds">'</span>hello-world<span class="pl-pds">'</span></span>)
+    .state({
+      name<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span><span class="pl-pds">'</span></span>,
+      response<span class="pl-k">:</span> <span class="pl-s"><span class="pl-pds">'</span><span class="pl-pds">'</span></span>
+    })
+    .actions({ setName })
+    .calculations({ formulateResponse })
+    .sideEffects({ deliverResponse })
+    .init(bindGlobalEvents)
+}
+
+<span class="pl-k">function</span> <span class="pl-en">bindGlobalEvents</span>(<span class="pl-smi">dispatch</span>) {
+  <span class="pl-c1">document</span>.<span class="pl-c1">getElementById</span>(<span class="pl-s"><span class="pl-pds">"</span>id<span class="pl-pds">"</span></span>)
+    .addEventListener(<span class="pl-s"><span class="pl-pds">"</span>input<span class="pl-pds">"</span></span>, (<span class="pl-smi">event</span>)<span class="pl-k"> =&gt;</span> dispatch.setName(<span class="pl-c1">event</span>.<span class="pl-c1">target</span>.<span class="pl-c1">value</span>))
+}
+
+<span class="pl-c">// Actions</span>
+<span class="pl-k">const</span> <span class="pl-c1">setName</span> <span class="pl-k">=</span> (<span class="pl-smi">name</span>)<span class="pl-k"> =&gt;</span> update(<span class="pl-s"><span class="pl-pds">'</span>name<span class="pl-pds">'</span></span>, name)
+
+<span class="pl-c">// Calculations</span>
+<span class="pl-k">const</span> <span class="pl-c1">formulateResponse</span> <span class="pl-k">=</span> update(<span class="pl-s"><span class="pl-pds">'</span>response<span class="pl-pds">'</span></span>, (<span class="pl-smi">x</span>, <span class="pl-smi">state</span>)<span class="pl-k"> =&gt;</span> <span class="pl-s"><span class="pl-pds">`</span>Hello <span class="pl-s1"><span class="pl-pse">${</span>state.<span class="pl-c1">name</span><span class="pl-pse">}</span></span><span class="pl-pds">`</span></span>)
+
+<span class="pl-c">// Side-Effects</span>
+<span class="pl-k">const</span> <span class="pl-c1">deliverResponse</span> <span class="pl-k">=</span> (<span class="pl-smi">state</span>)<span class="pl-k"> =&gt;</span> {
+  <span class="pl-c1">document</span>.<span class="pl-c1">getElementById</span>(<span class="pl-s"><span class="pl-pds">"</span>out<span class="pl-pds">"</span></span>).textContent <span class="pl-k">=</span> state.response
+}</pre></div>
+
+<p>This example uses the <em>update</em> function from the
+<a href="https://github.com/fluxlet/fluxlet-immutable">fluxlet-immutable</a> library, which is in a separate
+package as you may want to use whatever immutable library you prefer.</p>
+
+<p>For a richer example see the
+<a href="https://github.com/fluxlet/fluxlet-example-todomvc">fluxlet-example-todomvc</a>.</p>
+
+<p>Oh and btw, all of the Fluxlet code, additional libraries and examples are
+written and take advantage of ECMAScript 2015 syntax, but only use API features
+from ES5.</p>
+
+<h2>
+<a id="documentation" class="anchor" href="#documentation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Documentation</h2>
+
+<p>Read the <a href="src/fluxlet.js">fluxlet source</a> source, and/or the <em>groc</em> generated
+docs.</p>
+
+<p>Docs can be generated using groc:</p>
+
+<pre><code>$ groc
+</code></pre>
+
+<p>And then opened directly from the filesystem in a browser.</p>
+
+<h2>
+<a id="installing" class="anchor" href="#installing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installing</h2>
+
+<h3>
+<a id="using-jspm" class="anchor" href="#using-jspm" aria-hidden="true"><span class="octicon octicon-link"></span></a>Using <a href="http://jspm.io">jspm</a>
+</h3>
+
+<pre><code>$ jspm install fluxlet=github:fluxlet/fluxlet@master
+</code></pre>
+
+<h3>
+<a id="using-npm" class="anchor" href="#using-npm" aria-hidden="true"><span class="octicon octicon-link"></span></a>Using <a href="https://www.npmjs.com/">npm</a>
+</h3>
+
+<pre><code>$ npm install fluxlet
+</code></pre>
+
+<h3>
+<a id="using-bower" class="anchor" href="#using-bower" aria-hidden="true"><span class="octicon octicon-link"></span></a>Using <a href="http://bower.io/">bower</a>
+</h3>
+
+<pre><code>$ bower install fluxlet/fluxlet
+</code></pre>
+
+<p>You'll find the ES6 src in <em>bower_components/fluxlet/src/fluxlet.js</em>,
+which will need to be transpiled using your favourite tools.</p>
+
+<h2>
+<a id="testing-fluxlets" class="anchor" href="#testing-fluxlets" aria-hidden="true"><span class="octicon octicon-link"></span></a>Testing Fluxlets</h2>
+
+<p>To make testing of fluxlets easier a test library,
+<a href="https://github.com/fluxlet/fluxlet-testlet">testlet</a>, provides a fluent API
+for setting up fluxlets, dispatching actions, and checking state using a
+given/when/then style.</p>
+
+<h2>
+<a id="development" class="anchor" href="#development" aria-hidden="true"><span class="octicon octicon-link"></span></a>Development</h2>
+
+<pre><code>$ npm install
+</code></pre>
+
+<h2>
+<a id="tests" class="anchor" href="#tests" aria-hidden="true"><span class="octicon octicon-link"></span></a>Tests</h2>
+
+<p>Test are run using karma and jspm:</p>
+
+<pre><code>$ npm test
+</code></pre>
+
+<p>or</p>
+
+<pre><code>$ jspm install
+$ karma start
+</code></pre>
+
+<p>There is also a config for Wallaby if you have it installed in your IDE.</p>
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Fluxlet maintained by <a href="https://github.com/Fluxlet">Fluxlet</a></p>
+        <p>Published with <a href="https://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
+
+    
+
+  </body>
+</html>
