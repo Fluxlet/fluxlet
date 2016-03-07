@@ -1,6 +1,6 @@
 {
   "name": "fluxlet",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "An application state management micro-framework",
   "main": "lib/fluxlet",
   "registry": "jspm",
