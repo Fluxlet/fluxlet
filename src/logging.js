@@ -18,6 +18,22 @@ export function setLogger(log) {
 // Collapse dispatch groups by default if true
 let collapsed = false
 
+// Enable/disable logging of state
+let logState = true
+
+export function enableState(enable) {
+  logState = !!enable
+}
+
+// Enable/disable logging of action arguments
+let logActionArgs = true
+
+export function enableActionArgs(enable) {
+  logActionArgs = !!enable
+}
+
+// Enable/disable logging of action args
+
 // ## Registration hooks
 //
 //     fluxlet()
@@ -60,17 +76,17 @@ export const dispatches = {
   dispatch({ logId, actionName, actionArgs, startState, enable }) {
     if (enable) {
       if (collapsed) {
-        logger.groupCollapsed(`${logId} dispatch ${actionName}`)
+        (logger.groupCollapsed || logger.group || logger.log)(`${logId} dispatch ${actionName}`)
       } else {
-        logger.group(`${logId} dispatch ${actionName}`)
+        (logger.group || logger.log)(`${logId} dispatch ${actionName}`)
       }
       group.push(logId)
-      logger.log("action args", actionArgs)
-      logger.log("start state", startState)
+      logActionArgs && logger.log("action args", actionArgs)
+      logState && logger.log("start state", startState)
       return (finalState) => {
-        logger.log("final state", finalState)
+        logState && logger.log("final state", finalState)
         group.pop()
-        logger.groupEnd()
+        logger.groupEnd && logger.groupEnd()
       }
     }
   }
