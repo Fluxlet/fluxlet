@@ -76,9 +76,9 @@ export const dispatches = {
   dispatch({ logId, actionName, actionArgs, startState, enable }) {
     if (enable) {
       if (collapsed) {
-        (logger.groupCollapsed || logger.group || logger.log)(`${logId} dispatch ${actionName}`)
+        (logger.groupCollapsed || logger.group || logger.log).call(logger, `${logId} dispatch ${actionName}`)
       } else {
-        (logger.group || logger.log)(`${logId} dispatch ${actionName}`)
+        (logger.group || logger.log).call(logger, `${logId} dispatch ${actionName}`)
       }
       group.push(logId)
       logActionArgs && logger.log("action args", actionArgs)
